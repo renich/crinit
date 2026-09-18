@@ -2,9 +2,11 @@
 version: 1
 
 exclude:
+  - examples/
   - lib/
   - bin/
   - docs/
+
 
 rules:
   FLAW011:

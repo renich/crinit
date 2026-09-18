@@ -1,0 +1,17 @@
+# Ameba Static Code Analysis Configuration
+# Strict Fail-Fast Policy: Full default rule set enabled.
+
+Globs:
+  - src/**/*.cr
+  - spec/**/*.cr
+
+Excluded:
+  - examples/**
+  - lib/**
+  - bin/**
+  - .shards/**
+  - docs/build/**
+
+Layout/LineLength:
+  Enabled: true
+  MaxLength: 132
