@@ -44,7 +44,39 @@ describe Crinit::TemplateManifest do
     end
   end
 
-  it "returns nil when no template.yml or template.yaml exists" do
+  it "parses template.yaml when template.yml is absent" do
+    with_temp_dir("crinit_manifest_yaml_test") do |template_dir|
+      yaml_content = <<-YAML
+        ---
+        name: yaml-starter
+        version: 2.0.0
+        ...
+        YAML
+      File.write(template_dir.join("template.yaml"), yaml_content)
+
+      manifest = Crinit::TemplateManifest.load(template_dir)
+      manifest.should_not be_nil
+      next unless manifest
+
+      manifest.name.should eq("yaml-starter")
+      manifest.version.should eq("2.0.0")
+    end
+  end
+
+  it "prefers template.yml over template.yaml when both exist" do
+    with_temp_dir("crinit_manifest_both_test") do |template_dir|
+      File.write(template_dir.join("template.yml"), "---\nname: yml-primary\n...\n")
+      File.write(template_dir.join("template.yaml"), "---\nname: yaml-secondary\n...\n")
+
+      manifest = Crinit::TemplateManifest.load(template_dir)
+      manifest.should_not be_nil
+      next unless manifest
+
+      manifest.name.should eq("yml-primary")
+    end
+  end
+
+  it "returns nil when no template manifest exists" do
     with_temp_dir("crinit_manifest_nil_test") do |dir|
       Crinit::TemplateManifest.load(dir).should be_nil
     end

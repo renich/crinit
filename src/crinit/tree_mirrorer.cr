@@ -106,7 +106,10 @@ module Crinit
       return false unless relative_dir.parts.empty?
 
       case child
-      when "template.yml", "template.yaml", ".crinit", ".template",
+      when "template.yml", "template.yaml",
+           ".template.yml", ".template.yaml",
+           ".crinit.yml", ".crinit.yaml",
+           ".crinit", ".template",
            "template_assets", ".git", "lib", "bin", ".shards", "shard.lock"
         true
       else

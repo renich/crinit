@@ -42,18 +42,21 @@ module Crinit
     )
     end
 
-    # Discovers and parses template.yml or template.yaml from the template root.
-    # Returns nil if neither manifest file exists.
+    # Discovers and parses template manifest from the template root.
+    # Supports both .yml and .yaml extensions (template.yml, template.yaml,
+    # .template.yml, .template.yaml, .crinit.yml, .crinit.yaml).
+    # Returns nil if no manifest file exists.
     def self.load(template_dir : Path) : TemplateManifest?
-      yml_path = template_dir.join("template.yml")
-      yaml_path = template_dir.join("template.yaml")
+      candidates = [
+        template_dir.join("template.yml"),
+        template_dir.join("template.yaml"),
+        template_dir.join(".template.yml"),
+        template_dir.join(".template.yaml"),
+        template_dir.join(".crinit.yml"),
+        template_dir.join(".crinit.yaml"),
+      ]
 
-      path = if File.exists?(yml_path)
-               yml_path
-             elsif File.exists?(yaml_path)
-               yaml_path
-             end
-
+      path = candidates.find { |candidate| File.exists?(candidate) }
       return unless path
 
       begin

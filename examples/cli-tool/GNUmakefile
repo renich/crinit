@@ -8,7 +8,7 @@ CRYSTAL_FLAGS ?= --release
 BIN_DIR := bin
 TARGET := $(BIN_DIR)/{{name}}
 SOURCES := $(shell find src -type f -name '*.cr' 2>/dev/null)
-CONFIG_FILES := shard.yml GNUmakefile
+CONFIG_FILES := $(wildcard shard.yml shard.yaml) GNUmakefile
 
 .DEFAULT_GOAL := all
 

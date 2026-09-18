@@ -20,7 +20,7 @@ BIN_DIR := bin
 TARGET := $(BIN_DIR)/crinit
 SOURCES := $(shell find src -type f -name '*.cr' 2>/dev/null)
 SPECS := $(shell find spec -type f -name '*.cr' 2>/dev/null)
-CONFIG_FILES := shard.yml .ameba.yml .flaw.yml GNUmakefile
+CONFIG_FILES := $(wildcard shard.yml shard.yaml .ameba.yml .ameba.yaml .flaw.yml .flaw.yaml) GNUmakefile
 
 .DEFAULT_GOAL := all
 

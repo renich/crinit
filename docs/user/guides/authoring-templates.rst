@@ -54,7 +54,7 @@ The engine will unescape them during rendering to output literal Crystal macro s
 
 Template Manifest and Remote Assets
 -----------------------------------
-Templates can optionally include a ``template.yml`` manifest in the template root directory to declare metadata and external remote assets:
+Templates can optionally include a ``template.yml`` (or ``template.yaml``) manifest in the template root directory to declare metadata and external remote assets:
 
 .. code-block:: yaml
 

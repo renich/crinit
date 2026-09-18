@@ -183,4 +183,23 @@ describe Crinit::TreeMirrorer do
       mirrorer.render
     end
   end
+
+  it "excludes template.yaml and dot-prefixed manifests from destination" do
+    template_dir = Path.new("template").expand
+    Dir.mkdir_p(template_dir.join("src"))
+    File.write(template_dir.join("src", "main.cr"), "puts 1")
+    File.write(template_dir.join("template.yaml"), "---\nname: test\n...\n")
+    File.write(template_dir.join(".template.yaml"), "---\nname: dot-test\n...\n")
+
+    dest_dir = Path.new("dest").expand
+    engine = Crinit::TokenEngine.new({"name" => "test_yaml"})
+    config = Crinit::Config.new(name: "test_yaml", dir: dest_dir.to_s, silent: true)
+
+    mirrorer = Crinit::TreeMirrorer.new(template_dir, config, engine)
+    mirrorer.render
+
+    File.exists?(dest_dir.join("src", "main.cr")).should be_true
+    File.exists?(dest_dir.join("template.yaml")).should be_false
+    File.exists?(dest_dir.join(".template.yaml")).should be_false
+  end
 end

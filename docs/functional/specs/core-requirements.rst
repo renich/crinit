@@ -47,7 +47,7 @@ Functional Requirements Matrix
   On POSIX-compliant systems (Linux and macOS), executable permission bits (``0o755``) on template scripts and hooks must be preserved when rendered into the target repository.
 
 * **[FUNC-007] Optional Template Manifest**:
-  Templates may include an optional ``template.yml`` manifest defining metadata, variable definitions with defaults, and mixin conditions. The manifest file itself must be excluded from the generated project output.
+  Templates may include an optional ``template.yml`` (or ``template.yaml``) manifest defining metadata, variable definitions with defaults, and mixin conditions. The manifest file itself must be excluded from the generated project output.
 
 * **[FUNC-008] Automated Git Repository Initialization**:
   Unless explicitly disabled via ``--no-git`` or manifest configuration, the engine must initialize a Git repository in the destination directory and configure default branches.
