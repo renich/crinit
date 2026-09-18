@@ -19,7 +19,7 @@ Milestones & Deliverables
 * **Milestone 3.2: Community & Core Team Review**:
 
   - [ ] Open RFC Pull Request on GitHub (``crystal-lang/rfcs``).
-  - [ ] Present design in Crystal forum/discussion channels.
+  - [x] Present design in Crystal forum/discussion channels (`Topic #9156 <https://forum.crystal-lang.org/t/rfc-crinit-pluggable-filesystem-driven-template-engine-for-crystal-upstream-crystal-init-evolution/9156>`_).
   - [ ] Address feedback regarding Windows support, path delimiters, and token delimiters.
 
 * **Milestone 3.3: Final Comment Period (FCP) & Approval**:
