@@ -27,7 +27,9 @@ module Crinit
       files_to_render : Array({Path, Path}),
       manifest : TemplateManifest?,
     ) : Nil
-      conflicting = files_to_render.map { |_, target| target }.select { |target_file| File.exists?(target_file) }
+      conflicting = files_to_render
+        .map { |_, target| target }
+        .select { |target_file| File.exists?(target_file) || File.symlink?(target_file) }
 
       if manifest
         manifest.remote_assets.each do |asset|
@@ -37,7 +39,7 @@ module Crinit
             config.expanded_dir.join(target_rel),
             "remote asset target #{asset.target.inspect}"
           )
-          conflicting << target_path if File.exists?(target_path)
+          conflicting << target_path if File.exists?(target_path) || File.symlink?(target_path)
         end
       end
 
@@ -53,10 +55,11 @@ module Crinit
     end
 
     private def render_single_file(src : Path, target : Path) : Nil
-      is_overwrite = File.exists?(target)
+      is_overwrite = File.exists?(target) || File.symlink?(target)
       return if is_overwrite && config.skip_existing?
 
       Dir.mkdir_p(target.dirname)
+      File.delete(target) if File.symlink?(target)
 
       if binary_file?(src)
         File.copy(src, target)
@@ -137,7 +140,7 @@ module Crinit
            ".template.yml", ".template.yaml",
            ".crinit.yml", ".crinit.yaml",
            ".crinit", ".template",
-           "template_assets", ".git", "lib", "bin", ".shards", "shard.lock"
+           "template_assets", ".git", "lib", ".shards", "shard.lock"
         true
       else
         false
@@ -158,7 +161,7 @@ module Crinit
         PathGuard.ensure_within!(template_dir, real_target, "template symlink #{src_child}")
       end
 
-      if Dir.exists?(src_child) && !File.symlink?(src_child)
+      if Dir.exists?(src_child)
         collect_recursively(src_child, rel_child, entries, fallback_sources)
       elsif File.exists?(src_child)
         rendered_rel = engine.render_path(rel_child)

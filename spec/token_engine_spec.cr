@@ -20,6 +20,36 @@ describe Crinit::TokenEngine do
     it "handles single-word identifiers" do
       Crinit::TokenEngine.module_name("crinit").should eq("Crinit")
     end
+
+    it "handles numeric segments without syntax errors" do
+      Crinit::TokenEngine.module_name("service-2").should eq("Service2")
+      Crinit::TokenEngine.module_name("service-2-app").should eq("Service2::App")
+      Crinit::TokenEngine.module_name("my-app-v2").should eq("My::App::V2")
+    end
+  end
+
+  describe ".from_config" do
+    it "hydrates all standard dictionary keys from Config" do
+      config = Crinit::Config.new(
+        name: "my_cool_app",
+        dir: "/tmp/my_cool_app",
+        author: "Alice Developer",
+        email: "alice@example.com",
+        github_name: "alicedev"
+      )
+
+      engine = Crinit::TokenEngine.from_config(config)
+      dict = engine.dictionary
+
+      dict["name"].should eq("my_cool_app")
+      dict["module_name"].should eq("MyCoolApp")
+      dict["author"].should eq("Alice Developer")
+      dict["email"].should eq("alice@example.com")
+      dict["github_user"].should eq("alicedev")
+      dict["github_repo"].should eq("alicedev/my_cool_app")
+      dict["year"].should eq(Time.local.year.to_s)
+      dict["crystal_version"].should eq(Crystal::VERSION)
+    end
   end
 
   describe "#render_content" do
@@ -48,6 +78,12 @@ describe Crinit::TokenEngine do
     it "unescapes explicitly escaped macro delimiters" do
       template = "Defines a macro: \\{{ my_macro_call \\}}"
       expected = "Defines a macro: {{ my_macro_call }}"
+      engine.render_content(template).should eq(expected)
+    end
+
+    it "preserves escaped backslashes before macro delimiters" do
+      template = "Regex: \\\\{{my_macro}}"
+      expected = "Regex: \\\\{{my_macro}}"
       engine.render_content(template).should eq(expected)
     end
 

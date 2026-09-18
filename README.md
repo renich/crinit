@@ -10,7 +10,7 @@
   <a href="https://gitlab.com/renich/crinit/-/releases"><img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version 0.1.0" /></a>
   <a href="https://crystal-lang.org/"><img src="https://img.shields.io/badge/crystal-%3E%3D%201.21.0-black.svg?style=flat-square&logo=crystal&logoColor=white" alt="Crystal >= 1.21.0" /></a>
   <a href="https://gitlab.com/renich/crinit/-/pipelines"><img src="https://img.shields.io/badge/pipeline-passing-brightgreen.svg?style=flat-square&logo=gitlab" alt="GitLab CI Passing" /></a>
-  <a href="https://gitlab.com/renich/crinit"><img src="https://img.shields.io/badge/specs-23%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
+  <a href="https://gitlab.com/renich/crinit"><img src="https://img.shields.io/badge/specs-58%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
   <a href="https://github.com/crystal-ameba/ameba"><img src="https://img.shields.io/badge/ameba-0%20violations-brightgreen.svg?style=flat-square" alt="Ameba Clean" /></a>
   <a href="https://github.com/kdairatchi/flaw"><img src="https://img.shields.io/badge/flaw-0%20findings-brightgreen.svg?style=flat-square" alt="Flaw Clean" /></a>
 </p>

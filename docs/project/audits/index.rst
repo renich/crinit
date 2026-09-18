@@ -53,4 +53,5 @@ Protocol Audits
    :maxdepth: 1
 
    2026-09-18-crinit-echelon-review
+   2026-09-18-crinit-crucible-review
 

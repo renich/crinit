@@ -28,14 +28,23 @@ module Crinit
     # Converts project identifiers to valid Crystal module names.
     # Hyphens indicate nested namespaces (e.g. foo-bar -> Foo::Bar).
     # Underscores convert to PascalCase within the same namespace (e.g. foo_bar -> FooBar).
+    # Numeric segments fold into preceding identifier (e.g. service-2 -> Service2).
     def self.module_name(name : String) : String
-      name
-        .gsub(/[-_]([^a-z])/i, "\\1")
-        .split('-')
-        .compact_map do |part|
-          part.camelcase if part[0]?.try(&.ascii_letter?)
+      parts = [] of String
+      current = ""
+
+      name.split('-').each do |segment|
+        if current.empty?
+          current = segment
+        elsif segment[0]?.try(&.ascii_letter?)
+          parts << current.camelcase
+          current = segment
+        else
+          current = "#{current}_#{segment}"
         end
-        .join("::")
+      end
+      parts << current.camelcase unless current.empty?
+      parts.reject(&.empty?).join("::")
     end
 
     # Renders a string template, substituting recognized tokens while preserving
@@ -43,10 +52,10 @@ module Crinit
     def render_content(content : String) : String
       return content unless content.includes?("{{")
 
-      # Pass 1: Protect explicit escape markers
+      # Pass 1: Protect explicit escape markers (not preceded by another backslash)
       guarded = content
-        .gsub(/\\\{\{/, ESCAPED_OPEN)
-        .gsub(/\\\}\}/, ESCAPED_CLOSE)
+        .gsub(/(?<!\\)\\\{\{/, ESCAPED_OPEN)
+        .gsub(/(?<!\\)\\\}\}/, ESCAPED_CLOSE)
 
       # Pass 2: Substitute only known dictionary keys
       substituted = guarded.gsub(TOKEN_REGEX) do |match, regex_match|

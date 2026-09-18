@@ -47,46 +47,54 @@ module Crinit
     end
 
     private def self.candidate_paths(type : String) : Array(Path)
-      paths = [] of Path
+      raw_paths = [] of Path
 
       # Priority 2: CRYSTAL_TEMPLATE_PATH environment variable
-      if env_path = ENV["CRYSTAL_TEMPLATE_PATH"]?
+      if env_path = ENV["CRYSTAL_TEMPLATE_PATH"]?.presence
         env_path.split(Process::PATH_DELIMITER, remove_empty: true).each do |base|
-          paths << Path.new(base, type).expand
+          raw_paths << Path.new(base, type).expand
         end
       end
 
       # Priority 3: Local Workspace Override
-      paths << Path.new(".crystal", "templates", type).expand
+      raw_paths << Path.new(".crystal", "templates", type).expand
 
       # Priority 4: OS-Native User Template Directory
-      paths.concat(user_template_paths(type))
+      raw_paths.concat(user_template_paths(type))
 
       # Priority 5: OS-Native System Template Directory
-      paths.concat(system_template_paths(type))
+      raw_paths.concat(system_template_paths(type))
 
-      paths.uniq
+      candidates = [] of Path
+      raw_paths.uniq.each do |candidate_path|
+        base = candidate_path.parent
+        PathGuard.ensure_within!(base, candidate_path, "template candidate #{type.inspect}")
+        candidates << candidate_path
+      rescue SecurityError
+        next
+      end
+      candidates
     end
 
     private def self.user_template_paths(type : String) : Array(Path)
       paths = [] of Path
 
       {% if flag?(:windows) %}
-        if local_appdata = ENV["LOCALAPPDATA"]?
+        if local_appdata = ENV["LOCALAPPDATA"]?.presence
           paths << Path.new(local_appdata, "crystal", "templates", type)
         end
-        if user_profile = ENV["USERPROFILE"]?
+        if user_profile = ENV["USERPROFILE"]?.presence
           paths << Path.new(user_profile, ".crystal", "templates", type)
         end
       {% elsif flag?(:darwin) %}
-        if home = ENV["HOME"]?
+        if home = ENV["HOME"]?.presence
           paths << Path.new(home, "Library", "Application Support", "crystal", "templates", type)
           paths << Path.new(home, ".local", "share", "crystal", "templates", type)
         end
       {% else %}
-        if xdg_data = ENV["XDG_DATA_HOME"]?
+        if xdg_data = ENV["XDG_DATA_HOME"]?.presence
           paths << Path.new(xdg_data, "crystal", "templates", type)
-        elsif home = ENV["HOME"]?
+        elsif home = ENV["HOME"]?.presence
           paths << Path.new(home, ".local", "share", "crystal", "templates", type)
         end
       {% end %}
@@ -97,8 +105,12 @@ module Crinit
     private def self.system_template_paths(type : String) : Array(Path)
       paths = [] of Path
 
+      if exec_path = Process.executable_path
+        paths << Path.new(exec_path).parent.join("..", "share", "crystal", "templates", type).expand
+      end
+
       {% if flag?(:windows) %}
-        if prog_files = ENV["ProgramFiles"]?
+        if prog_files = ENV["ProgramFiles"]?.presence
           paths << Path.new(prog_files, "Crystal", "templates", type)
         end
       {% elsif flag?(:darwin) %}

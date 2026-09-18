@@ -60,7 +60,7 @@ describe Crinit::AssetFetcher do
               cache_dir: cache_dir
             )
             engine = Crinit::TokenEngine.from_config(config)
-            fetcher = Crinit::AssetFetcher.new(config, tpl_dir, engine, cache)
+            fetcher = Crinit::AssetFetcher.new(config, tpl_dir, engine, cache, allow_local: true)
 
             url = "http://127.0.0.1:#{address.port}/asset.txt"
             asset = Crinit::RemoteAsset.new(
@@ -104,7 +104,7 @@ describe Crinit::AssetFetcher do
               cache_dir: cache_dir
             )
             engine = Crinit::TokenEngine.from_config(config)
-            fetcher = Crinit::AssetFetcher.new(config, tpl_dir, engine, cache)
+            fetcher = Crinit::AssetFetcher.new(config, tpl_dir, engine, cache, allow_local: true)
 
             url = "http://127.0.0.1:#{address.port}/bad.txt"
             asset = Crinit::RemoteAsset.new(

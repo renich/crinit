@@ -41,13 +41,13 @@ Functional Requirements Matrix
   Unrecognized ``{{ ... }}`` patterns must be ignored to prevent syntax collisions with Crystal's native macro expressions. Escaped tokens (``\{{ ... \}}``) must unescape to literal ``{{ ... }}``.
 
 * **[FUNC-005] Binary Asset & Media Passthrough**:
-  The engine must distinguish text files from binary assets (e.g., PNG, JPEG, SVG, compiled binaries). Binary files must be copied byte-for-byte without UTF-8 string encoding or token inspection.
+  The engine must distinguish text files from binary assets (e.g., PNG, JPEG, WebP, compiled binaries). Binary files must be copied byte-for-byte without UTF-8 string encoding or token inspection. Textual markup files such as SVG are processed as text to allow token interpolation.
 
 * **[FUNC-006] POSIX Permission Preservation**:
   On POSIX-compliant systems (Linux and macOS), executable permission bits (``0o755``) on template scripts and hooks must be preserved when rendered into the target repository.
 
 * **[FUNC-007] Optional Template Manifest**:
-  Templates may include an optional ``template.yml`` (or ``template.yaml``) manifest defining metadata, variable definitions with defaults, and mixin conditions. The manifest file itself must be excluded from the generated project output.
+  Templates may include an optional ``template.yml`` (or ``template.yaml``) manifest defining metadata and remote asset declarations. (Advanced variable definitions and mixin conditions are sequenced for Phase 2). The manifest file itself must be excluded from the generated project output.
 
 * **[FUNC-008] Automated Git Repository Initialization**:
-  Unless explicitly disabled via ``--no-git`` or manifest configuration, the engine must initialize a Git repository in the destination directory and configure default branches.
+  Unless explicitly disabled via ``--no-git``, the engine must initialize a Git repository in the destination directory and configure default branches.

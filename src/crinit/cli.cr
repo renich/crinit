@@ -15,8 +15,14 @@ module Crinit
       STDERR.puts "You can use --force to overwrite those files,"
       STDERR.puts "or --skip-existing to skip existing files and generate the others."
       exit 1
+    rescue ex : OptionParser::InvalidOption | OptionParser::MissingOption
+      STDERR.puts "Error: #{ex.message}".colorize(:red)
+      exit 1
     rescue ex : InvalidNameError | TemplateNotFoundError | Error
       STDERR.puts "Cannot initialize Crystal project: #{ex.message}".colorize(:red)
+      exit 1
+    rescue ex : File::Error | IO::Error
+      STDERR.puts "Filesystem error: #{ex.message}".colorize(:red)
       exit 1
     end
 
@@ -36,7 +42,7 @@ module Crinit
       end
 
       unless config.no_git?
-        Git.init(config.dir, silent: config.silent?)
+        Git.init(config.expanded_dir.to_s, silent: config.silent?)
       end
     end
 
@@ -119,12 +125,15 @@ module Crinit
         exit 1
       end
 
-      config.skeleton_type = remaining.shift
-
-      if remaining.empty?
-        STDERR.puts "Error: Missing target directory argument.".colorize(:red)
-        puts opts
-        exit 1
+      if config.custom_template_path
+        config.skeleton_type = "custom"
+      else
+        config.skeleton_type = remaining.shift
+        if remaining.empty?
+          STDERR.puts "Error: Missing target directory argument.".colorize(:red)
+          puts opts
+          exit 1
+        end
       end
 
       dir_arg = remaining.shift
@@ -134,6 +143,12 @@ module Crinit
       else
         config.name = dir_arg
         config.dir = remaining.shift
+      end
+
+      unless remaining.empty?
+        STDERR.puts "Error: Unexpected argument '#{remaining.first}'.".colorize(:red)
+        puts opts
+        exit 1
       end
     end
 
@@ -147,7 +162,16 @@ module Crinit
         raise Error.new("Cannot use --force and --skip-existing together")
       end
 
+      validate_skeleton_type(config.skeleton_type) unless config.custom_template_path
       validate_name(config.name)
+    end
+
+    def self.validate_skeleton_type(type : String) : Nil
+      unless type =~ /\A[a-zA-Z0-9_-]+\z/
+        raise InvalidNameError.new(
+          "Invalid template type #{type.inspect}. Must contain only alphanumeric characters, dashes, or underscores."
+        )
+      end
     end
 
     private def self.hydrate_git_defaults(config : Config) : Nil

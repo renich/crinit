@@ -6,9 +6,3 @@ exclude:
   - lib/
   - bin/
   - docs/
-
-
-rules:
-  FLAW011:
-    ignore:
-      - src/crinit/asset_fetcher.cr

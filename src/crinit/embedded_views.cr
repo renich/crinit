@@ -19,14 +19,18 @@ module Crinit
       ]
 
       # Conflict detection
-      existing = views.map { |rel, _| config.expanded_dir.join(rel) }.select { |path| File.exists?(path) }
+      targets = views.map do |rel, _|
+        PathGuard.ensure_within!(config.expanded_dir, config.expanded_dir.join(rel), "embedded view #{rel}")
+      end
+      existing = targets.select { |path| File.exists?(path) || File.symlink?(path) }
       if existing.present? && !config.force? && !config.skip_existing?
         raise FilesConflictError.new(existing.map(&.to_s))
       end
 
-      views.each do |rel_path, content|
-        target = config.expanded_dir.join(rel_path)
-        if File.exists?(target)
+      views.each_with_index do |(rel_path, content), idx|
+        target = targets[idx]
+        is_overwrite = File.exists?(target) || File.symlink?(target)
+        if is_overwrite
           next if config.skip_existing?
           puts " #{"overwrite".colorize(:light_green)}  #{target}" unless config.silent?
         else
@@ -34,6 +38,7 @@ module Crinit
         end
 
         Dir.mkdir_p(target.dirname)
+        File.delete(target) if File.symlink?(target)
         File.write(target, content)
       end
     end

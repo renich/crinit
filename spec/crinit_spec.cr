@@ -2,25 +2,20 @@
 # Verifies [FUNC-001] and [TECH-001]: CLI option parsing & execution.
 
 require "./spec_helper"
-require "file_utils"
 
 describe Crinit::CLI do
-  around_each do |example|
-    temp_dir = File.tempname("crinit_cli_test")
-    Dir.mkdir_p(temp_dir)
-    begin
-      FileUtils.cd(temp_dir) do
-        example.run
-      end
-    ensure
-      FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
-    end
+  it "validates valid project names" do
+    Crinit::CLI.validate_name("my_project").should be_nil
+    Crinit::CLI.validate_name("telemetry-collector").should be_nil
+    Crinit::CLI.validate_name("simple").should be_nil
   end
 
-  it "validates valid project names" do
-    Crinit::CLI.validate_name("my_project")
-    Crinit::CLI.validate_name("telemetry-collector")
-    Crinit::CLI.validate_name("simple")
+  it "validates template skeleton type" do
+    Crinit::CLI.validate_skeleton_type("app").should be_nil
+    Crinit::CLI.validate_skeleton_type("kemal-web").should be_nil
+    expect_raises(Crinit::InvalidNameError, /Invalid template type/) do
+      Crinit::CLI.validate_skeleton_type("../bad/type")
+    end
   end
 
   it "rejects invalid project names" do
@@ -45,33 +40,64 @@ describe Crinit::CLI do
     end
   end
 
+  it "rejects mutually exclusive --force and --skip-existing" do
+    with_temp_dir("crinit_mutex_test") do |dir|
+      expect_raises(Crinit::Error, /Cannot use --force and --skip-existing together/) do
+        Crinit::CLI.parse_args(["app", dir.to_s, "--force", "--skip-existing"])
+      end
+    end
+  end
+
   it "initializes an embedded app template project" do
-    Crinit::CLI.run(["app", "demo_app", "--no-git"])
+    with_temp_dir("crinit_app_test") do |dir|
+      target_dir = dir.join("demo_app")
+      Crinit::CLI.run(["app", target_dir.to_s, "--silent", "--no-git"])
 
-    File.exists?("demo_app/shard.yml").should be_true
-    File.exists?("demo_app/src/demo_app.cr").should be_true
-    File.exists?("demo_app/spec/spec_helper.cr").should be_true
-    File.exists?("demo_app/.editorconfig").should be_true
-    File.exists?("demo_app/LICENSE").should be_true
+      File.exists?(target_dir.join("shard.yml")).should be_true
+      File.exists?(target_dir.join("src", "demo_app.cr")).should be_true
+      File.exists?(target_dir.join("spec", "spec_helper.cr")).should be_true
+      File.exists?(target_dir.join(".editorconfig")).should be_true
+      File.exists?(target_dir.join("LICENSE")).should be_true
 
-    shard_content = File.read("demo_app/shard.yml")
-    shard_content.should start_with("---\n")
-    shard_content.should end_with("...\n")
-    shard_content.should contain("name: demo_app")
-    shard_content.should contain("main: src/demo_app.cr")
+      shard_content = File.read(target_dir.join("shard.yml"))
+      shard_content.should start_with("---\n")
+      shard_content.should end_with("...\n")
+      shard_content.should contain("name: demo_app")
+      shard_content.should contain("main: src/demo_app.cr")
+    end
   end
 
   it "initializes an embedded lib template project" do
-    Crinit::CLI.run(["lib", "demo_lib", "--no-git"])
+    with_temp_dir("crinit_lib_test") do |dir|
+      target_dir = dir.join("demo_lib")
+      Crinit::CLI.run(["lib", target_dir.to_s, "--silent", "--no-git"])
 
-    File.exists?("demo_lib/shard.yml").should be_true
-    File.exists?("demo_lib/src/demo_lib.cr").should be_true
-    File.exists?("demo_lib/spec/spec_helper.cr").should be_true
+      File.exists?(target_dir.join("shard.yml")).should be_true
+      File.exists?(target_dir.join("src", "demo_lib.cr")).should be_true
+      File.exists?(target_dir.join("spec", "spec_helper.cr")).should be_true
 
-    shard_content = File.read("demo_lib/shard.yml")
-    shard_content.should start_with("---\n")
-    shard_content.should end_with("...\n")
-    shard_content.should contain("name: demo_lib")
-    shard_content.should_not contain("targets:")
+      shard_content = File.read(target_dir.join("shard.yml"))
+      shard_content.should start_with("---\n")
+      shard_content.should end_with("...\n")
+      shard_content.should contain("name: demo_lib")
+      shard_content.should_not contain("targets:")
+    end
+  end
+
+  it "initializes a custom template with --template <path> <target_dir>" do
+    with_temp_dir("crinit_custom_tpl") do |tpl_dir|
+      with_temp_dir("crinit_custom_dest") do |dest_dir|
+        File.write(tpl_dir.join("shard.yml"), "---\nname: {{name}}\n...\n")
+        Dir.mkdir_p(tpl_dir.join("src"))
+        File.write(tpl_dir.join("src", "main.cr"), "puts \"{{module_name}}\"\n")
+
+        target_dir = dest_dir.join("my_service")
+        Crinit::CLI.run(["--template", tpl_dir.to_s, target_dir.to_s, "--silent", "--no-git"])
+
+        File.exists?(target_dir.join("shard.yml")).should be_true
+        File.read(target_dir.join("shard.yml")).should contain("name: my_service")
+        File.read(target_dir.join("src", "main.cr")).should contain("puts \"MyService\"")
+      end
+    end
   end
 end

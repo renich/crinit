@@ -12,12 +12,34 @@ module Crinit
       base_str = expanded_base.to_s
       target_str = expanded_target.to_s
 
-      is_within = target_str == base_str || target_str.starts_with?("#{base_str}#{Path::SEPARATORS.first}")
+      is_within = if base_str == "/"
+                    target_str.starts_with?("/")
+                  else
+                    target_str == base_str || target_str.starts_with?("#{base_str}#{Path::SEPARATORS.first}")
+                  end
 
       unless is_within
         raise SecurityError.new(
           "Path traversal detected in #{label}: #{target} escapes base directory #{base}"
         )
+      end
+
+      if File.symlink?(expanded_target)
+        real_target_str = File.realpath(expanded_target.to_s)
+        real_base_str = File.exists?(expanded_base) ? File.realpath(expanded_base.to_s) : base_str
+
+        is_real_within = if real_base_str == "/"
+                           real_target_str.starts_with?("/")
+                         else
+                           real_target_str == real_base_str ||
+                             real_target_str.starts_with?("#{real_base_str}#{Path::SEPARATORS.first}")
+                         end
+
+        unless is_real_within
+          raise SecurityError.new(
+            "Symlink traversal detected in #{label}: #{target} points outside base directory #{base}"
+          )
+        end
       end
 
       expanded_target

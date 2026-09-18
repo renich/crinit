@@ -9,6 +9,7 @@ module Crinit
     getter template_dir : Path
     getter engine : TokenEngine
     getter cache : CacheStore
+    getter? allow_local : Bool
 
     MAX_ASSET_SIZE = 50 * 1024 * 1024 # 50 MiB
 
@@ -17,6 +18,7 @@ module Crinit
       @template_dir : Path,
       @engine : TokenEngine,
       @cache : CacheStore = CacheStore.from_config(config),
+      @allow_local : Bool = false,
     )
     end
 
@@ -34,7 +36,7 @@ module Crinit
         "remote asset target #{asset.target.inspect}"
       )
 
-      is_overwrite = File.exists?(target_path)
+      is_overwrite = File.exists?(target_path) || File.symlink?(target_path)
       return if is_overwrite && config.skip_existing?
 
       Dir.mkdir_p(target_path.dirname)
@@ -63,6 +65,12 @@ module Crinit
 
     private def try_tier2_download(asset : RemoteAsset, target_path : Path, is_overwrite : Bool) : Bool
       return false if config.offline?
+
+      if asset.executable? && asset.sha256.nil?
+        raise SecurityError.new(
+          "Remote executable asset #{asset.target} missing required sha256 checksum in template manifest"
+        )
+      end
 
       begin
         data = fetch_url_with_redirects(asset.url)
@@ -137,37 +145,51 @@ module Crinit
       uri = URI.parse(url)
       validate_url!(uri)
 
-      HTTP::Client.new(uri) do |client|
+      host_str = uri.host || raise SecurityError.new("Invalid URI: Missing host in #{uri}")
+      port_num = uri.port || (uri.scheme == "https" ? 443 : 80)
+      use_tls = uri.scheme == "https"
+
+      HTTP::Client.new(host: host_str, port: port_num, tls: use_tls) do |client|
         client.connect_timeout = 3.seconds
         client.read_timeout = 5.seconds
-
-        client.get(uri.request_target) do |response|
-          if response.status.redirection? && (location = response.headers["Location"]?)
-            redirect_uri = URI.parse(location)
-            target_url = redirect_uri.host ? location : uri.resolve(redirect_uri).to_s
-            return fetch_url_with_redirects(target_url, max_redirects - 1)
-          elsif response.status.success?
-            memory_io = IO::Memory.new
-            bytes_copied = IO.copy(response.body_io, memory_io, limit: MAX_ASSET_SIZE + 1)
-            if bytes_copied > MAX_ASSET_SIZE
-              raise SecurityError.new("Remote asset exceeds maximum allowed size (#{MAX_ASSET_SIZE} bytes): #{url}")
-            end
-            return memory_io.to_slice
-          else
-            raise AssetFetchError.new("HTTP status #{response.status_code} (#{response.status_message}) for #{url}")
-          end
-        end
+        handle_client_request(client, uri, url, max_redirects)
       end
     rescue ex : Socket::Error | IO::TimeoutError
       raise AssetFetchError.new("Network failure fetching #{url}: #{ex.message}")
     end
 
+    private def handle_client_request(
+      client : HTTP::Client,
+      uri : URI,
+      url : String,
+      max_redirects : Int32,
+    ) : Bytes
+      client.get(uri.request_target) do |response|
+        if response.status.redirection? && (location = response.headers["Location"]?)
+          redirect_uri = URI.parse(location)
+          target_url = redirect_uri.host ? location : uri.resolve(redirect_uri).to_s
+          return fetch_url_with_redirects(target_url, max_redirects - 1)
+        elsif response.status.success?
+          memory_io = IO::Memory.new
+          bytes_copied = IO.copy(response.body_io, memory_io, limit: MAX_ASSET_SIZE + 1)
+          if bytes_copied > MAX_ASSET_SIZE
+            raise SecurityError.new("Remote asset exceeds maximum allowed size (#{MAX_ASSET_SIZE} bytes): #{url}")
+          end
+          return memory_io.to_slice
+        else
+          raise AssetFetchError.new("HTTP status #{response.status_code} (#{response.status_message}) for #{url}")
+        end
+      end
+    end
+
     private def copy_and_chmod(source : Path, destination : Path, asset : RemoteAsset) : Nil
+      File.delete(destination) if File.symlink?(destination)
       File.copy(source, destination)
       apply_permissions(destination, asset)
     end
 
     private def write_and_chmod(data : Bytes, destination : Path, asset : RemoteAsset) : Nil
+      File.delete(destination) if File.symlink?(destination)
       File.write(destination, data)
       apply_permissions(destination, asset)
     end
@@ -189,7 +211,7 @@ module Crinit
       puts "#{prefix}#{verb} #{tag}  #{path}"
     end
 
-    BLOCKED_METADATA_HOSTS = {"169.254.169.254", "metadata.google.internal", "instance-data"}
+    BLOCKED_HOSTNAMES = {"169.254.169.254", "metadata.google.internal", "instance-data", "localhost"}
 
     private def validate_url!(uri : URI) : Nil
       scheme = uri.scheme
@@ -202,9 +224,42 @@ module Crinit
         raise SecurityError.new("Invalid URI: Missing host in #{uri}")
       end
 
-      if BLOCKED_METADATA_HOSTS.includes?(host.downcase)
+      return if allow_local?
+
+      host_lower = host.downcase.strip("[]")
+      if BLOCKED_HOSTNAMES.includes?(host_lower)
         raise SecurityError.new("Access to internal/metadata address #{host.inspect} is prohibited.")
       end
+
+      if blocked_ip?(host_lower)
+        raise SecurityError.new("Access to private/local network address #{host.inspect} is prohibited.")
+      end
+    end
+
+    private def blocked_ip?(clean_ip : String) : Bool
+      ip_candidate = clean_ip.starts_with?("::ffff:") ? clean_ip.sub("::ffff:", "") : clean_ip
+      if ip_candidate.includes?(':')
+        blocked_ipv6?(ip_candidate)
+      else
+        blocked_ipv4?(ip_candidate)
+      end
+    end
+
+    private def blocked_ipv6?(ip : String) : Bool
+      lower = ip.downcase
+      return true if lower == "::1" || lower == "::"
+      lower.starts_with?("fe8") || lower.starts_with?("fe9") ||
+        lower.starts_with?("fea") || lower.starts_with?("feb") ||
+        lower.starts_with?("fc") || lower.starts_with?("fd")
+    end
+
+    private def blocked_ipv4?(ip : String) : Bool
+      parts = ip.split('.').compact_map(&.to_u32?)
+      return false unless parts.size == 4
+
+      p0, p1 = parts[0], parts[1]
+      p0 == 127 || p0 == 10 || (p0 == 172 && (16..31).includes?(p1)) ||
+        (p0 == 192 && p1 == 168) || (p0 == 169 && p1 == 254) || p0 == 0
     end
   end
 end

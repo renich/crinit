@@ -2,39 +2,38 @@
 # Verifies [FUNC-002] and [TECH-002]: Multi-Platform template discovery.
 
 require "./spec_helper"
-require "file_utils"
 
 describe Crinit::TemplateResolver do
-  around_each do |example|
-    temp_dir = File.tempname("crinit_resolver_test")
-    Dir.mkdir_p(temp_dir)
-    begin
-      FileUtils.cd(temp_dir) do
-        example.run
-      end
-    ensure
-      FileUtils.rm_rf(temp_dir) if Dir.exists?(temp_dir)
+  it "resolves an explicit template directory from a filesystem path" do
+    with_temp_dir("crinit_explicit_tpl") do |custom_dir|
+      File.write(custom_dir.join("shard.yml"), "name: custom\n")
+
+      resolved = Crinit::TemplateResolver.resolve("ignored", explicit_path: custom_dir.to_s)
+      resolved.should be_a(Crinit::DirectoryTemplateSource)
+      resolved.as(Crinit::DirectoryTemplateSource).path.should eq(custom_dir.expand.normalize)
     end
   end
 
-  it "resolves an explicit template directory from a filesystem path" do
-    custom_dir = Path.new("custom_template").expand
-    Dir.mkdir_p(custom_dir)
-    File.write(custom_dir.join("shard.yml"), "name: custom\n")
+  it "resolves from CRYSTAL_TEMPLATE_PATH environment variable" do
+    with_temp_dir("crinit_env_tpl_base") do |base_dir|
+      service_dir = base_dir.join("service")
+      Dir.mkdir_p(service_dir)
+      File.write(service_dir.join("shard.yml"), "name: service\n")
 
-    resolved = Crinit::TemplateResolver.resolve("ignored", explicit_path: custom_dir.to_s)
-    resolved.should be_a(Crinit::DirectoryTemplateSource)
-    resolved.as(Crinit::DirectoryTemplateSource).path.should eq(custom_dir)
-  end
-
-  it "resolves from workspace local ./.crystal/templates/<TYPE>" do
-    local_dir = Path.new(".crystal", "templates", "service").expand
-    Dir.mkdir_p(local_dir)
-    File.write(local_dir.join("shard.yml"), "name: service\n")
-
-    resolved = Crinit::TemplateResolver.resolve("service")
-    resolved.should be_a(Crinit::DirectoryTemplateSource)
-    resolved.as(Crinit::DirectoryTemplateSource).path.should eq(local_dir)
+      orig_env = ENV["CRYSTAL_TEMPLATE_PATH"]?
+      begin
+        ENV["CRYSTAL_TEMPLATE_PATH"] = base_dir.to_s
+        resolved = Crinit::TemplateResolver.resolve("service")
+        resolved.should be_a(Crinit::DirectoryTemplateSource)
+        resolved.as(Crinit::DirectoryTemplateSource).path.should eq(service_dir.expand.normalize)
+      ensure
+        if orig_env
+          ENV["CRYSTAL_TEMPLATE_PATH"] = orig_env
+        else
+          ENV.delete("CRYSTAL_TEMPLATE_PATH")
+        end
+      end
+    end
   end
 
   it "falls back to embedded templates for 'app' and 'lib'" do

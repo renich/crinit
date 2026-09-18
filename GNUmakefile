@@ -5,11 +5,11 @@ SHELL := /bin/bash
 CRYSTAL ?= crystal
 SHARDS ?= shards
 CRSTLINT ?= crstlint
-AMEBA ?= /home/renich/Projects/crystal/init/app/bin/ameba
-FLAW ?= /home/renich/Projects/crystal/init/app/bin/flaw
+AMEBA ?= $(shell command -v ameba 2>/dev/null || [ -x /home/renich/Projects/crystal/init/app/bin/ameba ] && echo /home/renich/Projects/crystal/init/app/bin/ameba || echo bin/ameba)
+FLAW ?= $(shell command -v flaw 2>/dev/null || [ -x /home/renich/Projects/crystal/init/app/bin/flaw ] && echo /home/renich/Projects/crystal/init/app/bin/flaw || echo bin/flaw)
 
-# Peak performance compiler optimization flags
-CRYSTAL_FLAGS ?= --release --no-debug --mcpu=native
+# Compiler optimization flags (portable release defaults)
+CRYSTAL_FLAGS ?= --release --no-debug
 
 # Standard GNU directory variables
 prefix ?= /usr/local
@@ -24,7 +24,7 @@ CONFIG_FILES := $(wildcard shard.yml shard.yaml .ameba.yml .ameba.yaml .flaw.yml
 
 .DEFAULT_GOAL := all
 
-.PHONY: all build check spec lint flaw rstlint docs clean install install-local uninstall help
+.PHONY: all build check spec lint flaw rstlint docs clean install install-local strip uninstall help
 
 # Default goal: build the binary artifact
 all: $(TARGET)
@@ -37,12 +37,8 @@ $(BIN_DIR):
 
 # Compile production release binary only when sources or configurations change
 $(TARGET): $(SOURCES) $(CONFIG_FILES) | $(BIN_DIR)
-	@echo "==> Compiling crinit peak performance binary ($(CRYSTAL_FLAGS))..."
+	@echo "==> Compiling crinit binary ($(CRYSTAL_FLAGS))..."
 	$(CRYSTAL) build $(CRYSTAL_FLAGS) src/main.cr -o $@
-	@if command -v strip >/dev/null 2>&1; then \
-		echo "==> Stripping symbols for minimal binary footprint..."; \
-		strip -s $@; \
-	fi
 
 # Execute test suite
 spec:
@@ -91,6 +87,11 @@ clean:
 	@echo "==> Cleaning build artifacts..."
 	rm -rf $(BIN_DIR)
 	$(MAKE) -C docs clean 2>/dev/null || true
+
+# Strip binary symbols
+strip: $(TARGET)
+	@echo "==> Stripping symbols from $(TARGET)..."
+	@strip -s $(TARGET)
 
 # Install binary to user path ~/.local/bin
 install-local: $(TARGET)

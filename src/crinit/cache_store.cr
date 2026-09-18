@@ -61,17 +61,21 @@ module Crinit
 
       # Atomic write using a temp file
       temp_path = cache_dir.join(".tmp_#{sha256}_#{Random::Secure.hex(4)}")
-      File.open(temp_path.to_s, "w") do |file|
-        case data
-        when Bytes
-          file.write(data)
-        when String
-          file.print(data)
+      begin
+        File.open(temp_path.to_s, "w") do |file|
+          case data
+          when Bytes
+            file.write(data)
+          when String
+            file.print(data)
+          end
         end
-      end
 
-      File.rename(temp_path, target)
-      target
+        File.rename(temp_path, target)
+        target
+      ensure
+        File.delete(temp_path) if File.exists?(temp_path)
+      end
     end
 
     def cache_file(sha256 : String) : Path
@@ -91,10 +95,11 @@ module Crinit
       digest.hexfinal
     end
 
-    private def compute_file_sha256(path : Path) : String
+    # Computes SHA-256 hex digest for an existing file.
+    def self.digest_file(path : Path) : String
       digest = OpenSSL::Digest.new("SHA256")
       File.open(path.to_s) do |file|
-        buffer = Bytes.new(16384)
+        buffer = Bytes.new(8192)
         while (bytes_read = file.read(buffer)) > 0
           digest.update(buffer[0, bytes_read])
         end
@@ -104,14 +109,18 @@ module Crinit
       ""
     end
 
+    private def compute_file_sha256(path : Path) : String
+      self.class.digest_file(path)
+    end
+
     private def default_cache_dir : Path
       {% if flag?(:windows) %}
-        base = ENV["LOCALAPPDATA"]? || ENV["TEMP"]? || "."
+        base = ENV["LOCALAPPDATA"]?.presence || ENV["TEMP"]?.presence || "."
         Path.new(base).join("crystal", "crinit", "assets")
       {% elsif flag?(:darwin) %}
         Path.home.join("Library", "Caches", "crystal", "crinit", "assets")
       {% else %}
-        base = ENV["XDG_CACHE_HOME"]? || Path.home.join(".cache").to_s
+        base = ENV["XDG_CACHE_HOME"]?.presence || Path.home.join(".cache").to_s
         Path.new(base).join("crystal", "crinit", "assets")
       {% end %}
     end
