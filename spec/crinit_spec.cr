@@ -55,6 +55,8 @@ describe Crinit::CLI do
     File.exists?("demo_app/LICENSE").should be_true
 
     shard_content = File.read("demo_app/shard.yml")
+    shard_content.should start_with("---\n")
+    shard_content.should end_with("...\n")
     shard_content.should contain("name: demo_app")
     shard_content.should contain("main: src/demo_app.cr")
   end
@@ -67,6 +69,8 @@ describe Crinit::CLI do
     File.exists?("demo_lib/spec/spec_helper.cr").should be_true
 
     shard_content = File.read("demo_lib/shard.yml")
+    shard_content.should start_with("---\n")
+    shard_content.should end_with("...\n")
     shard_content.should contain("name: demo_lib")
     shard_content.should_not contain("targets:")
   end

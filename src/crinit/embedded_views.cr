@@ -152,6 +152,7 @@ module Crinit
 
     private def shard_content : String
       String.build do |io|
+        io.puts "---"
         io.puts "name: #{config.name}"
         io.puts "version: 0.1.0"
         io.puts ""
@@ -167,6 +168,7 @@ module Crinit
         io.puts "crystal: '>= #{Crystal::VERSION}'"
         io.puts ""
         io.puts "license: MIT"
+        io.puts "..."
       end
     end
 
