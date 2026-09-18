@@ -32,7 +32,7 @@ A modern Kemal hypermedia web application inspired by the `sdogruyol/kemal-by-ex
 # Online scaffold with integrity verification
 crinit my_web ./my_web -t examples/kemal-web
 
-# Air-gapped / offline scaffold
+# Air-gapped/offline scaffold
 crinit my_web ./my_web -t examples/kemal-web --offline
 ```
 

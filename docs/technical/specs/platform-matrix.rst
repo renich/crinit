@@ -19,8 +19,8 @@ Search Path Matrix
 
    * - Platform
      - User Directory
-     - System / Distribution Directory
-   * - **Linux / BSD**
+     - System/Distribution Directory
+   * - **Linux/BSD**
      - ``$XDG_DATA_HOME/crystal/templates`` (fallback: ``~/.local/share/crystal/templates``)
      - ``/usr/share/crystal/templates`` (or ``$ORIGIN/../share/crystal/templates``)
    * - **macOS**
@@ -40,7 +40,7 @@ Filesystem Conventions
    Windows prohibits ``< > : " / \ | ? *`` in filenames. Template tokens must strictly adhere to ``{{key}}`` or ``__key__``, which are fully valid across NTFS, APFS, and ext4/Btrfs.
 
 3. **Line Endings**:
-   File writing must preserve Unix line endings (``\n`` / LF) in generated source code, consistent with standard Crystal compiler conventions.
+   File writing must preserve Unix line endings (``\n``/LF) in generated source code, consistent with standard Crystal compiler conventions.
 
 4. **File Permissions**:
    POSIX executable bits (``0o755``) are restored on Linux and macOS using ``File.chmod``. On Windows, permission modifications are gracefully bypassed via ``{% unless flag?(:windows) %}``.

@@ -23,7 +23,7 @@
 
 > **Project Metadata**:
 > - **Description**: Next-generation pluggable project scaffolding engine for Crystal. Engineered for arbitrary tree mirroring, macro-safe token replacement, and zero-dependency upstream compiler integration.
-> - **Topics / Tags**: `crystal`, `crystal-lang`, `scaffolding`, `generator`, `template-engine`, `compiler`, `cli`, `ameba`, `flaw`, `sphinx`, `crstlint`
+> - **Topics/Tags**: `crystal`, `crystal-lang`, `scaffolding`, `generator`, `template-engine`, `compiler`, `cli`, `ameba`, `flaw`, `sphinx`, `crstlint`
 
 ---
 
@@ -109,7 +109,7 @@ Priority 2: CRYSTAL_TEMPLATE_PATH                           (Environment variabl
 Priority 3: ./.crystal/templates/<TYPE>                     (Project/Workspace local)
 Priority 4: User Data Directory                             (OS-native user path)
 Priority 5: System Data Directory                           (OS-native system path or $ORIGIN-relative)
-Priority 6: Built-in Defaults                               (Embedded app / lib fallback)
+Priority 6: Built-in Defaults                               (Embedded app/lib fallback)
 ```
 
 ### OS Directory Mappings
@@ -154,7 +154,7 @@ A custom template is simply a directory containing files, directories, and an op
 
 | Token | Description | Source |
 | :--- | :--- | :--- |
-| `{{name}}` | Normalized project name | User argument / directory basename |
+| `{{name}}` | Normalized project name | User argument/directory basename |
 | `{{module_name}}` | PascalCase Crystal module identifier (e.g. `my-app` $\to$ `MyApp`, `foo-bar` $\to$ `Foo::Bar`) | Derived algorithm |
 | `{{author}}` | Author full name | `git config user.name` (fallback: `your-name-here`) |
 | `{{email}}` | Author email address | `git config user.email` (fallback: `your-email-here`) |

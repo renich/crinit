@@ -19,7 +19,7 @@ Milestones & Deliverables
 * **Milestone 2.2: Ingest Library Blueprint (`lib/`)** (Fulfills `[FUNC-003]`, `[FUNC-004]`):
 
   - [ ] Convert ``init/lib/`` into a native ``crinit`` template directory.
-  - [ ] Configure GPLv3 / GNU FDL copyleft license headers.
+  - [ ] Configure GPLv3/GNU FDL copyleft license headers.
   - [ ] Retain Ameba and Flaw configuration and example runners.
 
 * **Milestone 2.3: End-to-End Scaffolding Verification**:
