@@ -11,29 +11,37 @@ FLAW ?= /home/renich/Projects/crystal/init/app/bin/flaw
 # Peak performance compiler optimization flags
 CRYSTAL_FLAGS ?= --release --no-debug --mcpu=native
 
+# Standard GNU directory variables
+prefix ?= /usr/local
+bindir ?= $(prefix)/bin
+user_bindir ?= $(HOME)/.local/bin
+
 BIN_DIR := bin
 TARGET := $(BIN_DIR)/crinit
 SOURCES := $(shell find src -type f -name '*.cr' 2>/dev/null)
 SPECS := $(shell find spec -type f -name '*.cr' 2>/dev/null)
+CONFIG_FILES := shard.yml .ameba.yml .flaw.yml GNUmakefile
 
 .DEFAULT_GOAL := all
 
-.PHONY: all build check spec lint flaw rstlint docs clean install install-local help
+.PHONY: all build check spec lint flaw rstlint docs clean install install-local uninstall help
 
-all: build
+# Default goal: build the binary artifact
+all: $(TARGET)
 
-$(BIN_DIR):
-	@mkdir -p $(BIN_DIR)
-
-# Compile production release binary with peak optimizations
+# Alias for target artifact
 build: $(TARGET)
 
-$(TARGET): $(SOURCES) | $(BIN_DIR)
+$(BIN_DIR):
+	@mkdir -p $@
+
+# Compile production release binary only when sources or configurations change
+$(TARGET): $(SOURCES) $(CONFIG_FILES) | $(BIN_DIR)
 	@echo "==> Compiling crinit peak performance binary ($(CRYSTAL_FLAGS))..."
-	$(CRYSTAL) build $(CRYSTAL_FLAGS) src/main.cr -o $(TARGET)
+	$(CRYSTAL) build $(CRYSTAL_FLAGS) src/main.cr -o $@
 	@if command -v strip >/dev/null 2>&1; then \
 		echo "==> Stripping symbols for minimal binary footprint..."; \
-		strip -s $(TARGET); \
+		strip -s $@; \
 	fi
 
 # Execute test suite
@@ -85,24 +93,34 @@ clean:
 	$(MAKE) -C docs clean 2>/dev/null || true
 
 # Install binary to user path ~/.local/bin
-install-local: build
-	@echo "==> Installing crinit to $(HOME)/.local/bin/crinit..."
-	install -m 0755 $(TARGET) $(HOME)/.local/bin/crinit
+install-local: $(TARGET)
+	@echo "==> Installing crinit to $(user_bindir)/crinit..."
+	@install -d $(user_bindir)
+	install -m 0755 $(TARGET) $(user_bindir)/crinit
 
 # Install binary to system path /usr/local/bin
-install: build
-	@echo "==> Installing crinit to /usr/local/bin/crinit..."
-	install -m 0755 $(TARGET) /usr/local/bin/crinit
+install: $(TARGET)
+	@echo "==> Installing crinit to $(DESTDIR)$(bindir)/crinit..."
+	@install -d $(DESTDIR)$(bindir)
+	install -m 0755 $(TARGET) $(DESTDIR)$(bindir)/crinit
+
+# Uninstall binary
+uninstall:
+	@echo "==> Uninstalling crinit from $(DESTDIR)$(bindir)/crinit..."
+	rm -f $(DESTDIR)$(bindir)/crinit
 
 help:
 	@echo "Available build targets:"
-	@echo "  build         - Compile peak performance binary with --release --no-debug --mcpu=native (default)"
+	@echo "  all           - Compile binary only if sources changed (default)"
+	@echo "  build         - Alias for all"
 	@echo "  spec          - Run Crystal specs"
 	@echo "  lint          - Run Ameba static analysis"
 	@echo "  flaw          - Run Flaw security scanner"
 	@echo "  rstlint       - Lint reStructuredText documentation"
 	@echo "  docs          - Build Sphinx HTML documentation"
 	@echo "  check         - Run full verification suite (spec, lint, flaw, rstlint)"
-	@echo "  install-local - Install binary to ~/.local/bin/crinit"
-	@echo "  install       - Install binary to /usr/local/bin/crinit"
+	@echo "  install-local - Install binary to $(user_bindir)/crinit"
+	@echo "  install       - Install binary to $(DESTDIR)$(bindir)/crinit"
+	@echo "  uninstall     - Remove installed binary from $(DESTDIR)$(bindir)/crinit"
 	@echo "  clean         - Remove binary and build outputs"
+	@echo "  help          - Show this help message"
