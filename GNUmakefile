@@ -8,6 +8,9 @@ CRSTLINT ?= crstlint
 AMEBA ?= /home/renich/Projects/crystal/init/app/bin/ameba
 FLAW ?= /home/renich/Projects/crystal/init/app/bin/flaw
 
+# Peak performance compiler optimization flags
+CRYSTAL_FLAGS ?= --release --no-debug --mcpu=native
+
 BIN_DIR := bin
 TARGET := $(BIN_DIR)/crinit
 SOURCES := $(shell find src -type f -name '*.cr' 2>/dev/null)
@@ -15,19 +18,23 @@ SPECS := $(shell find spec -type f -name '*.cr' 2>/dev/null)
 
 .DEFAULT_GOAL := all
 
-.PHONY: all build check spec lint flaw docs clean install help
+.PHONY: all build check spec lint flaw rstlint docs clean install install-local help
 
 all: build
 
 $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
 
-# Compile production release binary
+# Compile production release binary with peak optimizations
 build: $(TARGET)
 
 $(TARGET): $(SOURCES) | $(BIN_DIR)
-	@echo "==> Compiling crinit release binary..."
-	$(CRYSTAL) build --release src/main.cr -o $(TARGET)
+	@echo "==> Compiling crinit peak performance binary ($(CRYSTAL_FLAGS))..."
+	$(CRYSTAL) build $(CRYSTAL_FLAGS) src/main.cr -o $(TARGET)
+	@if command -v strip >/dev/null 2>&1; then \
+		echo "==> Stripping symbols for minimal binary footprint..."; \
+		strip -s $(TARGET); \
+	fi
 
 # Execute test suite
 spec:
@@ -77,19 +84,25 @@ clean:
 	rm -rf $(BIN_DIR)
 	$(MAKE) -C docs clean 2>/dev/null || true
 
-# Install binary to user path
+# Install binary to user path ~/.local/bin
+install-local: build
+	@echo "==> Installing crinit to $(HOME)/.local/bin/crinit..."
+	install -m 0755 $(TARGET) $(HOME)/.local/bin/crinit
+
+# Install binary to system path /usr/local/bin
 install: build
-	@echo "==> Installing crinit to /usr/local/bin/..."
+	@echo "==> Installing crinit to /usr/local/bin/crinit..."
 	install -m 0755 $(TARGET) /usr/local/bin/crinit
 
 help:
 	@echo "Available build targets:"
-	@echo "  build   - Compile optimized release binary (default)"
-	@echo "  spec    - Run Crystal specs"
-	@echo "  lint    - Run Ameba static analysis"
-	@echo "  flaw    - Run Flaw security scanner"
-	@echo "  rstlint - Lint reStructuredText documentation"
-	@echo "  docs    - Build Sphinx HTML documentation"
-	@echo "  check   - Run full verification suite (spec, lint, flaw, rstlint)"
-	@echo "  install - Install binary to /usr/local/bin/crinit"
-	@echo "  clean   - Remove binary and build outputs"
+	@echo "  build         - Compile peak performance binary with --release --no-debug --mcpu=native (default)"
+	@echo "  spec          - Run Crystal specs"
+	@echo "  lint          - Run Ameba static analysis"
+	@echo "  flaw          - Run Flaw security scanner"
+	@echo "  rstlint       - Lint reStructuredText documentation"
+	@echo "  docs          - Build Sphinx HTML documentation"
+	@echo "  check         - Run full verification suite (spec, lint, flaw, rstlint)"
+	@echo "  install-local - Install binary to ~/.local/bin/crinit"
+	@echo "  install       - Install binary to /usr/local/bin/crinit"
+	@echo "  clean         - Remove binary and build outputs"
