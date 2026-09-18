@@ -1,15 +1,17 @@
-name: "kemal-web"
-description: "Production Kemal web application with Datastar, Pico CSS, and SQLite"
-version: "1.0.0"
-author: "Rénich Bon Ćirić"
+---
+name: kemal-web
+description: Production Kemal web application with Datastar, Pico CSS, and SQLite
+version: 1.0.0
+author: Rénich Bon Ćirić
 
 remote_assets:
-  - target: "public/css/pico.min.css"
-    url: "https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-    sha256: "fbc9a63fc9fc9f72d12fd7fc9806e11fa9f77ae4f9cad146b27003a1119ba3db"
-    fallback: "template_assets/pico.min.css"
+  - target: public/css/pico.min.css
+    url: https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css
+    sha256: fbc9a63fc9fc9f72d12fd7fc9806e11fa9f77ae4f9cad146b27003a1119ba3db
+    fallback: template_assets/pico.min.css
 
-  - target: "public/js/datastar.js"
-    url: "https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.9/bundles/datastar.js"
-    sha256: "11d9e34fecd2ca69b9faf9096bbd33feea2c79a732372337f34950a617538768"
-    fallback: "template_assets/datastar.js"
+  - target: public/js/datastar.js
+    url: https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.9/bundles/datastar.js
+    sha256: 11d9e34fecd2ca69b9faf9096bbd33feea2c79a732372337f34950a617538768
+    fallback: template_assets/datastar.js
+...

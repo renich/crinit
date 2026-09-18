@@ -1,4 +1,6 @@
-name: "cli-tool"
-description: "Minimal, high-performance CLI utility skeleton with OptionParser and GNUmakefile"
-version: "1.0.0"
-author: "Rénich Bon Ćirić"
+---
+name: cli-tool
+description: Minimal, high-performance CLI utility skeleton with OptionParser and GNUmakefile
+version: 1.0.0
+author: Rénich Bon Ćirić
+...

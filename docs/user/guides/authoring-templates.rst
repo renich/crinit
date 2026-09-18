@@ -58,20 +58,22 @@ Templates can optionally include a ``template.yml`` manifest in the template roo
 
 .. code-block:: yaml
 
-   name: "kemal-pro"
-   description: "Production Kemal web application with Datastar and Pico CSS"
-   author: "Rénich Bon Ćirić"
+   ---
+   name: kemal-pro
+   description: Production Kemal web application with Datastar and Pico CSS
+   author: Rénich Bon Ćirić
 
    remote_assets:
-     - target: "LICENSE"
-       url: "https://www.gnu.org/licenses/gpl-3.0.txt"
-       sha256: "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
-       fallback: "assets/licenses/gpl-3.0.txt"
+     - target: LICENSE
+       url: https://www.gnu.org/licenses/gpl-3.0.txt
+       sha256: 3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986
+       fallback: assets/licenses/gpl-3.0.txt
 
-     - target: "public/js/datastar.js"
-       url: "https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.9/bundles/datastar.js"
-       sha256: "b4c27a9223efcbeae664db88647ba3b6ea278d6b6bf091feaa3c74c3e7f4740e"
-       fallback: "assets/vendor/datastar.js"
+     - target: public/js/datastar.js
+       url: https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.9/bundles/datastar.js
+       sha256: b4c27a9223efcbeae664db88647ba3b6ea278d6b6bf091feaa3c74c3e7f4740e
+       fallback: assets/vendor/datastar.js
+   ...
 
 4-Tier Smart Fallback Resolution
 --------------------------------

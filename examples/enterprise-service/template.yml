@@ -1,4 +1,6 @@
-name: "enterprise-service"
-description: "Production Crystal service with domain-segregated directories, Sphinx documentation, containers, and packaging"
-version: "1.0.0"
-author: "Rénich Bon Ćirić"
+---
+name: enterprise-service
+description: Production Crystal service with domain-segregated directories, Sphinx documentation, containers, and packaging
+version: 1.0.0
+author: Rénich Bon Ćirić
+...

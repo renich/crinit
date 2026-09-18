@@ -123,11 +123,13 @@ describe Crinit::TreeMirrorer do
     File.write(template_dir.join("fallback", "pico.css"), "/* pico fallback */")
 
     manifest_yaml = <<-YAML
-      name: "kemal-app"
+      ---
+      name: kemal-app
       remote_assets:
-        - target: "public/css/pico.css"
-          url: "https://example.com/unreachable/pico.css"
-          fallback: "fallback/pico.css"
+        - target: public/css/pico.css
+          url: https://example.com/unreachable/pico.css
+          fallback: fallback/pico.css
+      ...
       YAML
     File.write(template_dir.join("template.yml"), manifest_yaml)
 
@@ -159,11 +161,13 @@ describe Crinit::TreeMirrorer do
     File.write(template_dir.join("fallback", "license.txt"), "GPLv3")
 
     manifest_yaml = <<-YAML
-      name: "gpl-app"
+      ---
+      name: gpl-app
       remote_assets:
-        - target: "LICENSE"
-          url: "https://example.com/unreachable/license.txt"
-          fallback: "fallback/license.txt"
+        - target: LICENSE
+          url: https://example.com/unreachable/license.txt
+          fallback: fallback/license.txt
+      ...
       YAML
     File.write(template_dir.join("template.yml"), manifest_yaml)
 

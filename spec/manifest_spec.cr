@@ -4,18 +4,20 @@ describe Crinit::TemplateManifest do
   it "parses template.yml with remote assets" do
     with_temp_dir("crinit_manifest_test") do |template_dir|
       yaml_content = <<-YAML
-        name: "kemal-starter"
-        description: "Full-stack Kemal web starter"
-        version: "1.0.0"
-        author: "Test Author"
+        ---
+        name: kemal-starter
+        description: Full-stack Kemal web starter
+        version: 1.0.0
+        author: Test Author
         remote_assets:
-          - target: "LICENSE"
-            url: "https://www.gnu.org/licenses/gpl-3.0.txt"
-            sha256: "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
-            fallback: "assets/licenses/gpl-3.0.txt"
-          - target: "public/js/datastar.js"
-            url: "https://example.com/datastar.js"
+          - target: LICENSE
+            url: https://www.gnu.org/licenses/gpl-3.0.txt
+            sha256: 3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986
+            fallback: assets/licenses/gpl-3.0.txt
+          - target: public/js/datastar.js
+            url: https://example.com/datastar.js
             executable: true
+        ...
         YAML
       File.write(template_dir.join("template.yml"), yaml_content)
 
