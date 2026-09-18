@@ -113,4 +113,70 @@ describe Crinit::TreeMirrorer do
       (File.info(dest_script).permissions.value & 0o111).should_not eq(0)
     end
   {% end %}
+
+  it "processes remote assets from template.yml and excludes fallback sources from direct mirror" do
+    template_dir = Path.new("template").expand
+    Dir.mkdir_p(template_dir.join("src"))
+    Dir.mkdir_p(template_dir.join("fallback"))
+
+    File.write(template_dir.join("src", "app.cr"), "puts 123")
+    File.write(template_dir.join("fallback", "pico.css"), "/* pico fallback */")
+
+    manifest_yaml = <<-YAML
+      name: "kemal-app"
+      remote_assets:
+        - target: "public/css/pico.css"
+          url: "https://example.com/unreachable/pico.css"
+          fallback: "fallback/pico.css"
+      YAML
+    File.write(template_dir.join("template.yml"), manifest_yaml)
+
+    dest_dir = Path.new("dest").expand
+    engine = Crinit::TokenEngine.new({"name" => "kemal_test"})
+    config = Crinit::Config.new(name: "kemal_test", dir: dest_dir.to_s, offline: true, silent: true)
+
+    mirrorer = Crinit::TreeMirrorer.new(template_dir, config, engine)
+    mirrorer.render
+
+    # 1. Standard files mirrored
+    File.exists?(dest_dir.join("src", "app.cr")).should be_true
+
+    # 2. template.yml not copied to destination
+    File.exists?(dest_dir.join("template.yml")).should be_false
+
+    # 3. Raw fallback source directory not copied to destination root
+    File.exists?(dest_dir.join("fallback", "pico.css")).should be_false
+
+    # 4. Target created from fallback
+    dest_target = dest_dir.join("public", "css", "pico.css")
+    File.exists?(dest_target).should be_true
+    File.read(dest_target).should eq("/* pico fallback */")
+  end
+
+  it "detects conflicts on remote asset targets during pre-flight check" do
+    template_dir = Path.new("template").expand
+    Dir.mkdir_p(template_dir.join("fallback"))
+    File.write(template_dir.join("fallback", "license.txt"), "GPLv3")
+
+    manifest_yaml = <<-YAML
+      name: "gpl-app"
+      remote_assets:
+        - target: "LICENSE"
+          url: "https://example.com/unreachable/license.txt"
+          fallback: "fallback/license.txt"
+      YAML
+    File.write(template_dir.join("template.yml"), manifest_yaml)
+
+    dest_dir = Path.new("dest").expand
+    Dir.mkdir_p(dest_dir)
+    File.write(dest_dir.join("LICENSE"), "Existing Proprietary License")
+
+    engine = Crinit::TokenEngine.new({"name" => "gpl_app"})
+    config = Crinit::Config.new(name: "gpl_app", dir: dest_dir.to_s, offline: true, silent: true)
+
+    mirrorer = Crinit::TreeMirrorer.new(template_dir, config, engine)
+    expect_raises(Crinit::FilesConflictError) do
+      mirrorer.render
+    end
+  end
 end

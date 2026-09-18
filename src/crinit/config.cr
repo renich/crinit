@@ -11,6 +11,9 @@ module Crinit
     property? skip_existing : Bool
     property? silent : Bool
     property? no_git : Bool
+    property? offline : Bool
+    property? refresh_assets : Bool
+    property cache_dir : Path?
 
     def initialize(
       @skeleton_type : String = "app",
@@ -24,6 +27,9 @@ module Crinit
       @skip_existing : Bool = false,
       @silent : Bool = false,
       @no_git : Bool = false,
+      @offline : Bool = false,
+      @refresh_assets : Bool = false,
+      @cache_dir : Path? = nil,
     )
     end
 

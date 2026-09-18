@@ -81,6 +81,14 @@ module Crinit
           config.custom_template_path = path
         end
 
+        opts.on("--offline", "Do not download remote assets; use cache or bundled fallbacks") do
+          config.offline = true
+        end
+
+        opts.on("--refresh-assets", "Bypass local cache and re-download remote assets") do
+          config.refresh_assets = true
+        end
+
         opts.on("--no-git", "Do not initialize a Git repository") do
           config.no_git = true
         end

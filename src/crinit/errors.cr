@@ -19,4 +19,12 @@ module Crinit
   # Raised when an invalid project name is provided.
   class InvalidNameError < Error
   end
+
+  # Raised when cryptographic checksum verification fails.
+  class SecurityError < Error
+  end
+
+  # Raised when an asset cannot be fetched and no fallback is available.
+  class AssetFetchError < Error
+  end
 end

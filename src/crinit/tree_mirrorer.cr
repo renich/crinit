@@ -14,12 +14,22 @@ module Crinit
     end
 
     def render : Nil
-      files_to_render = collect_entries
+      manifest = TemplateManifest.load(template_dir)
+      fallback_sources = collect_fallback_sources(manifest)
+      files_to_render = collect_entries(fallback_sources)
 
-      # Step 1: Pre-flight conflict check
-      existing = files_to_render.select { |_, target| File.exists?(target) }
-      if existing.present? && !config.force? && !config.skip_existing?
-        raise FilesConflictError.new(existing.map { |_, target| target.to_s })
+      # Step 1: Pre-flight conflict check (mirrored files + remote asset targets)
+      conflicting = files_to_render.map { |_, target| target }.select { |target_file| File.exists?(target_file) }
+      if manifest
+        manifest.remote_assets.each do |asset|
+          target_rel = engine.render_path(Path.new(asset.target))
+          target_path = config.expanded_dir.join(target_rel)
+          conflicting << target_path if File.exists?(target_path)
+        end
+      end
+
+      if conflicting.present? && !config.force? && !config.skip_existing?
+        raise FilesConflictError.new(conflicting.uniq.map(&.to_s))
       end
 
       # Step 2: Render directories and files
@@ -51,37 +61,73 @@ module Crinit
           puts "#{prefix}#{action}  #{target}"
         end
       end
+
+      # Step 4: Resolve remote assets via 4-tier pipeline
+      if manifest && manifest.remote_assets.present?
+        fetcher = AssetFetcher.new(config, template_dir, engine)
+        fetcher.resolve_all(manifest.remote_assets)
+      end
+    end
+
+    private def collect_fallback_sources(manifest : TemplateManifest?) : Set(Path)
+      sources = Set(Path).new
+      return sources unless manifest
+
+      manifest.remote_assets.each do |asset|
+        if fb = asset.fallback
+          sources << template_dir.join(fb)
+        end
+      end
+      sources
     end
 
     # Returns array of {source_file_path, destination_file_path}
-    private def collect_entries : Array({Path, Path})
+    private def collect_entries(fallback_sources : Set(Path) = Set(Path).new) : Array({Path, Path})
       entries = [] of {Path, Path}
 
-      collect_recursively(template_dir, Path.new(""), entries)
+      collect_recursively(template_dir, Path.new(""), entries, fallback_sources)
       entries
     end
 
-    private def collect_recursively(current_dir : Path, relative_dir : Path, entries : Array({Path, Path})) : Nil
+    private def collect_recursively(
+      current_dir : Path,
+      relative_dir : Path,
+      entries : Array({Path, Path}),
+      fallback_sources : Set(Path),
+    ) : Nil
       Dir.each_child(current_dir.to_s) do |child|
-        # Ignore metadata, build artifacts, and dependency state in template root
-        if relative_dir.parts.empty? && (
-             child == "template.yml" || child == "template.yaml" ||
-             child == ".git" || child == "lib" || child == "bin" ||
-             child == ".shards" || child == "shard.lock"
-           )
-          next
-        end
+        next if ignored_root_entry?(relative_dir, child)
 
-        src_child = current_dir.join(child)
-        rel_child = relative_dir.join(child)
+        process_child_entry(current_dir.join(child), relative_dir.join(child), entries, fallback_sources)
+      end
+    end
 
-        if Dir.exists?(src_child) && !File.symlink?(src_child)
-          collect_recursively(src_child, rel_child, entries)
-        elsif File.exists?(src_child)
-          rendered_rel = engine.render_path(rel_child)
-          dest_child = config.expanded_dir.join(rendered_rel)
-          entries << {src_child, dest_child}
-        end
+    private def ignored_root_entry?(relative_dir : Path, child : String) : Bool
+      return false unless relative_dir.parts.empty?
+
+      case child
+      when "template.yml", "template.yaml", ".crinit", ".template",
+           "template_assets", ".git", "lib", "bin", ".shards", "shard.lock"
+        true
+      else
+        false
+      end
+    end
+
+    private def process_child_entry(
+      src_child : Path,
+      rel_child : Path,
+      entries : Array({Path, Path}),
+      fallback_sources : Set(Path),
+    ) : Nil
+      return if fallback_sources.includes?(src_child)
+
+      if Dir.exists?(src_child) && !File.symlink?(src_child)
+        collect_recursively(src_child, rel_child, entries, fallback_sources)
+      elsif File.exists?(src_child)
+        rendered_rel = engine.render_path(rel_child)
+        dest_child = config.expanded_dir.join(rendered_rel)
+        entries << {src_child, dest_child}
       end
     end
 
