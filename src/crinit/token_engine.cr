@@ -41,6 +41,8 @@ module Crinit
     # Renders a string template, substituting recognized tokens while preserving
     # unmapped macro delimiters and unescaping explicit macro escapes.
     def render_content(content : String) : String
+      return content unless content.includes?("{{")
+
       # Pass 1: Protect explicit escape markers
       guarded = content
         .gsub(/\\\{\{/, ESCAPED_OPEN)
@@ -64,7 +66,10 @@ module Crinit
 
     # Interpolates tokens within a relative or absolute filesystem Path.
     def render_path(path : Path) : Path
-      Path.new(render_content(path.to_s))
+      path_str = path.to_s
+      return path unless path_str.includes?("{{")
+
+      Path.new(render_content(path_str))
     end
   end
 end

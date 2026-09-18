@@ -42,22 +42,17 @@ module Crinit
 
     def self.parse_args(args : Array(String)) : Config
       config = Config.new
+      parser = build_option_parser(config)
+      parser.parse(args)
 
-      parser = OptionParser.new do |opts|
-        opts.banner = <<-USAGE
-          Usage: crinit TYPE (DIR | NAME DIR) [OPTIONS]
+      validate_config!(config)
+      hydrate_git_defaults(config)
+      config
+    end
 
-          Initializes a Crystal project folder as a git repository using built-in
-          skeletons or filesystem templates.
-
-          TYPE is one of:
-              app                      Creates an application skeleton (built-in)
-              lib                      Creates a library skeleton (built-in)
-              <custom>                 Discovers template from local, user, or system paths
-
-          DIR  - directory where project will be generated
-          NAME - name of project to be generated (default: basename of DIR)
-          USAGE
+    private def self.build_option_parser(config : Config) : OptionParser
+      OptionParser.new do |opts|
+        opts.banner = banner_text
 
         opts.on("-h", "--help", "Show this help message") do
           puts opts
@@ -69,61 +64,80 @@ module Crinit
           exit 0
         end
 
-        opts.on("-f", "--force", "Force overwrite of existing files") do
-          config.force = true
-        end
-
-        opts.on("-s", "--skip-existing", "Skip existing files without erroring") do
-          config.skip_existing = true
-        end
-
-        opts.on("-t PATH", "--template=PATH", "Use an explicit filesystem template path") do |path|
-          config.custom_template_path = path
-        end
-
-        opts.on("--offline", "Do not download remote assets; use cache or bundled fallbacks") do
-          config.offline = true
-        end
-
-        opts.on("--refresh-assets", "Bypass local cache and re-download remote assets") do
-          config.refresh_assets = true
-        end
-
-        opts.on("--no-git", "Do not initialize a Git repository") do
-          config.no_git = true
-        end
-
-        opts.on("--silent", "Suppress stdout logging") do
-          config.silent = true
-        end
+        register_flags(opts, config)
 
         opts.unknown_args do |remaining|
-          if remaining.empty?
-            puts opts
-            exit 1
-          end
-
-          config.skeleton_type = remaining.shift
-
-          if remaining.empty?
-            STDERR.puts "Error: Missing target directory argument.".colorize(:red)
-            puts opts
-            exit 1
-          end
-
-          dir_arg = remaining.shift
-          if remaining.empty?
-            config.dir = dir_arg
-            config.name = config.expanded_dir.basename
-          else
-            config.name = dir_arg
-            config.dir = remaining.shift
-          end
+          parse_positional_args(remaining, config, opts)
         end
       end
+    end
 
-      parser.parse(args)
+    private def self.banner_text : String
+      <<-USAGE
+        Usage: crinit TYPE (DIR | NAME DIR) [OPTIONS]
 
+        Initializes a Crystal project folder as a git repository using built-in
+        skeletons or filesystem templates.
+
+        TYPE is one of:
+            app                      Creates an application skeleton (built-in)
+            lib                      Creates a library skeleton (built-in)
+            <custom>                 Discovers template from local, user, or system paths
+
+        DIR  - directory where project will be generated
+        NAME - name of project to be generated (default: basename of DIR)
+        USAGE
+    end
+
+    private def self.register_flags(opts : OptionParser, config : Config) : Nil
+      opts.on("-f", "--force", "Force overwrite of existing files") do
+        config.force = true
+      end
+      opts.on("-s", "--skip-existing", "Skip existing files without erroring") do
+        config.skip_existing = true
+      end
+      opts.on("-t PATH", "--template=PATH", "Use an explicit filesystem template path") do |path|
+        config.custom_template_path = path
+      end
+      opts.on("--offline", "Do not download remote assets; use cache or bundled fallbacks") do
+        config.offline = true
+      end
+      opts.on("--refresh-assets", "Bypass local cache and re-download remote assets") do
+        config.refresh_assets = true
+      end
+      opts.on("--no-git", "Do not initialize a Git repository") do
+        config.no_git = true
+      end
+      opts.on("--silent", "Suppress stdout logging") do
+        config.silent = true
+      end
+    end
+
+    private def self.parse_positional_args(remaining : Array(String), config : Config, opts : OptionParser) : Nil
+      if remaining.empty?
+        puts opts
+        exit 1
+      end
+
+      config.skeleton_type = remaining.shift
+
+      if remaining.empty?
+        STDERR.puts "Error: Missing target directory argument.".colorize(:red)
+        puts opts
+        exit 1
+      end
+
+      dir_arg = remaining.shift
+      if remaining.empty?
+        config.dir = dir_arg
+        config.name = config.expanded_dir.basename
+      else
+        config.name = dir_arg
+        config.dir = remaining.shift
+      end
+    end
+
+    private def self.validate_config!(config : Config) : Nil
       if config.dir.empty?
         STDERR.puts "Error: Target directory must be specified.".colorize(:red)
         exit 1
@@ -134,12 +148,12 @@ module Crinit
       end
 
       validate_name(config.name)
+    end
 
+    private def self.hydrate_git_defaults(config : Config) : Nil
       config.author = Git.git_config("user.name") || "your-name-here"
       config.email = Git.git_config("user.email") || "your-email-here"
       config.github_name = Git.git_config("github.user") || "your-github-user"
-
-      config
     end
 
     def self.validate_name(name : String) : Nil

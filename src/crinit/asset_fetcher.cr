@@ -10,6 +10,8 @@ module Crinit
     getter engine : TokenEngine
     getter cache : CacheStore
 
+    MAX_ASSET_SIZE = 50 * 1024 * 1024 # 50 MiB
+
     def initialize(
       @config : Config,
       @template_dir : Path,
@@ -26,7 +28,11 @@ module Crinit
 
     def resolve_asset(asset : RemoteAsset) : Nil
       target_rel = engine.render_path(Path.new(asset.target))
-      target_path = config.expanded_dir.join(target_rel)
+      target_path = PathGuard.ensure_within!(
+        config.expanded_dir,
+        config.expanded_dir.join(target_rel),
+        "remote asset target #{asset.target.inspect}"
+      )
 
       is_overwrite = File.exists?(target_path)
       return if is_overwrite && config.skip_existing?
@@ -94,7 +100,11 @@ module Crinit
       fallback_rel = asset.fallback
       return false unless fallback_rel
 
-      fallback_path = template_dir.join(fallback_rel)
+      fallback_path = PathGuard.ensure_within!(
+        template_dir,
+        template_dir.join(fallback_rel),
+        "fallback asset #{fallback_rel.inspect}"
+      )
       return false unless File.exists?(fallback_path)
 
       copy_and_chmod(fallback_path, target_path, asset)
@@ -138,7 +148,10 @@ module Crinit
             return fetch_url_with_redirects(target_url, max_redirects - 1)
           elsif response.status.success?
             memory_io = IO::Memory.new
-            IO.copy(response.body_io, memory_io)
+            bytes_copied = IO.copy(response.body_io, memory_io, limit: MAX_ASSET_SIZE + 1)
+            if bytes_copied > MAX_ASSET_SIZE
+              raise SecurityError.new("Remote asset exceeds maximum allowed size (#{MAX_ASSET_SIZE} bytes): #{url}")
+            end
             return memory_io.to_slice
           else
             raise AssetFetchError.new("HTTP status #{response.status_code} (#{response.status_message}) for #{url}")
@@ -176,6 +189,8 @@ module Crinit
       puts "#{prefix}#{verb} #{tag}  #{path}"
     end
 
+    BLOCKED_METADATA_HOSTS = {"169.254.169.254", "metadata.google.internal", "instance-data"}
+
     private def validate_url!(uri : URI) : Nil
       scheme = uri.scheme
       unless scheme == "http" || scheme == "https"
@@ -185,6 +200,10 @@ module Crinit
       host = uri.host
       if host.nil? || host.empty?
         raise SecurityError.new("Invalid URI: Missing host in #{uri}")
+      end
+
+      if BLOCKED_METADATA_HOSTS.includes?(host.downcase)
+        raise SecurityError.new("Access to internal/metadata address #{host.inspect} is prohibited.")
       end
     end
   end

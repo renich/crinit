@@ -1,5 +1,6 @@
 require "./crinit/version"
 require "./crinit/errors"
+require "./crinit/path_guard"
 require "./crinit/git"
 require "./crinit/config"
 require "./crinit/token_engine"

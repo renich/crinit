@@ -102,52 +102,45 @@ module Crinit
 
     private def readme_content : String
       String.build do |io|
-        io.puts "# #{config.name}"
-        io.puts ""
-        io.puts "TODO: Write a description here"
-        io.puts ""
-        io.puts "## Installation"
-        io.puts ""
-        if config.skeleton_type == "lib"
-          io.puts "1. Add the dependency to your `shard.yml`:"
-          io.puts ""
-          io.puts "   ```yaml"
-          io.puts "   dependencies:"
-          io.puts "     #{config.name}:"
-          io.puts "       github: #{config.github_repo}"
-          io.puts "   ```"
-          io.puts ""
-          io.puts "2. Run `shards install`"
-        else
-          io.puts "TODO: Write installation instructions here"
-        end
-        io.puts ""
-        io.puts "## Usage"
-        io.puts ""
-        if config.skeleton_type == "lib"
-          io.puts "```crystal"
-          io.puts "require \"#{config.name}\""
-          io.puts "```"
-          io.puts ""
-        end
-        io.puts "TODO: Write usage instructions here"
-        io.puts ""
-        io.puts "## Development"
-        io.puts ""
-        io.puts "TODO: Write development instructions here"
-        io.puts ""
-        io.puts "## Contributing"
-        io.puts ""
-        io.puts "1. Fork it (<https://github.com/#{config.github_repo}/fork>)"
-        io.puts "2. Create your feature branch (`git checkout -b my-new-feature`)"
-        io.puts "3. Commit your changes (`git commit -am 'Add some feature'`)"
-        io.puts "4. Push to the branch (`git push origin my-new-feature`)"
-        io.puts "5. Create a new Pull Request"
-        io.puts ""
-        io.puts "## Contributors"
-        io.puts ""
-        io.puts "- [#{config.author}](https://github.com/#{config.github_name}) - creator and maintainer"
+        io.puts "# #{config.name}\n\nTODO: Write a description here\n"
+        write_installation_section(io)
+        write_usage_section(io)
+        io.puts "## Development\n\nTODO: Write development instructions here\n"
+        write_contributing_section(io)
+        io.puts "## Contributors\n\n- [#{config.author}](https://github.com/#{config.github_name}) - creator and maintainer"
       end
+    end
+
+    private def write_installation_section(io : IO) : Nil
+      io.puts "## Installation\n"
+      if config.skeleton_type == "lib"
+        io.puts "1. Add the dependency to your `shard.yml`:\n"
+        io.puts "   ```yaml"
+        io.puts "   dependencies:"
+        io.puts "     #{config.name}:"
+        io.puts "       github: #{config.github_repo}"
+        io.puts "   ```\n"
+        io.puts "2. Run `shards install`\n"
+      else
+        io.puts "TODO: Write installation instructions here\n"
+      end
+    end
+
+    private def write_usage_section(io : IO) : Nil
+      io.puts "## Usage\n"
+      if config.skeleton_type == "lib"
+        io.puts "```crystal\nrequire \"#{config.name}\"\n```\n"
+      end
+      io.puts "TODO: Write usage instructions here\n"
+    end
+
+    private def write_contributing_section(io : IO) : Nil
+      io.puts "## Contributing\n"
+      io.puts "1. Fork it (<https://github.com/#{config.github_repo}/fork>)"
+      io.puts "2. Create your feature branch (`git checkout -b my-new-feature`)"
+      io.puts "3. Commit your changes (`git commit -am 'Add some feature'`)"
+      io.puts "4. Push to the branch (`git push origin my-new-feature`)"
+      io.puts "5. Create a new Pull Request\n"
     end
 
     private def shard_content : String

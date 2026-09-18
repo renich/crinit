@@ -18,12 +18,25 @@ module Crinit
       fallback_sources = collect_fallback_sources(manifest)
       files_to_render = collect_entries(fallback_sources)
 
-      # Step 1: Pre-flight conflict check (mirrored files + remote asset targets)
+      check_preflight_conflicts!(files_to_render, manifest)
+      render_all_files(files_to_render)
+      resolve_remote_assets(manifest)
+    end
+
+    private def check_preflight_conflicts!(
+      files_to_render : Array({Path, Path}),
+      manifest : TemplateManifest?,
+    ) : Nil
       conflicting = files_to_render.map { |_, target| target }.select { |target_file| File.exists?(target_file) }
+
       if manifest
         manifest.remote_assets.each do |asset|
           target_rel = engine.render_path(Path.new(asset.target))
-          target_path = config.expanded_dir.join(target_rel)
+          target_path = PathGuard.ensure_within!(
+            config.expanded_dir,
+            config.expanded_dir.join(target_rel),
+            "remote asset target #{asset.target.inspect}"
+          )
           conflicting << target_path if File.exists?(target_path)
         end
       end
@@ -31,42 +44,52 @@ module Crinit
       if conflicting.present? && !config.force? && !config.skip_existing?
         raise FilesConflictError.new(conflicting.uniq.map(&.to_s))
       end
+    end
 
-      # Step 2: Render directories and files
-      files_to_render.each do |src, target|
-        is_overwrite = File.exists?(target)
-        if is_overwrite && config.skip_existing?
-          next
-        end
+    private def render_all_files(files : Array({Path, Path})) : Nil
+      files.each do |src, target|
+        render_single_file(src, target)
+      end
+    end
 
-        Dir.mkdir_p(target.dirname)
+    private def render_single_file(src : Path, target : Path) : Nil
+      is_overwrite = File.exists?(target)
+      return if is_overwrite && config.skip_existing?
 
-        if binary_file?(src)
-          File.copy(src, target)
-        else
-          raw_content = File.read(src)
-          rendered_content = engine.render_content(raw_content)
-          File.write(target, rendered_content)
-        end
+      Dir.mkdir_p(target.dirname)
 
-        # Step 3: Preserve executable permissions on POSIX systems
-        {% unless flag?(:windows) %}
-          src_info = File.info(src)
-          File.chmod(target, src_info.permissions)
-        {% end %}
-
-        unless config.silent?
-          action = is_overwrite ? "overwrite".colorize(:light_green) : "create".colorize(:light_green)
-          prefix = is_overwrite ? " " : "    "
-          puts "#{prefix}#{action}  #{target}"
-        end
+      if binary_file?(src)
+        File.copy(src, target)
+      else
+        raw_content = File.read(src)
+        rendered_content = engine.render_content(raw_content)
+        File.write(target, rendered_content)
       end
 
-      # Step 4: Resolve remote assets via 4-tier pipeline
-      if manifest && manifest.remote_assets.present?
-        fetcher = AssetFetcher.new(config, template_dir, engine)
-        fetcher.resolve_all(manifest.remote_assets)
-      end
+      apply_file_permissions(src, target)
+      log_file_action(target, is_overwrite)
+    end
+
+    private def apply_file_permissions(src : Path, target : Path) : Nil
+      {% unless flag?(:windows) %}
+        src_info = File.info(src)
+        File.chmod(target, src_info.permissions)
+      {% end %}
+    end
+
+    private def log_file_action(target : Path, is_overwrite : Bool) : Nil
+      return if config.silent?
+
+      action = is_overwrite ? "overwrite".colorize(:light_green) : "create".colorize(:light_green)
+      prefix = is_overwrite ? " " : "    "
+      puts "#{prefix}#{action}  #{target}"
+    end
+
+    private def resolve_remote_assets(manifest : TemplateManifest?) : Nil
+      return unless manifest && manifest.remote_assets.present?
+
+      fetcher = AssetFetcher.new(config, template_dir, engine)
+      fetcher.resolve_all(manifest.remote_assets)
     end
 
     private def collect_fallback_sources(manifest : TemplateManifest?) : Set(Path)
@@ -75,7 +98,12 @@ module Crinit
 
       manifest.remote_assets.each do |asset|
         if fb = asset.fallback
-          sources << template_dir.join(fb)
+          fb_path = PathGuard.ensure_within!(
+            template_dir,
+            template_dir.join(fb),
+            "fallback asset #{fb.inspect}"
+          )
+          sources << fb_path
         end
       end
       sources
@@ -84,7 +112,6 @@ module Crinit
     # Returns array of {source_file_path, destination_file_path}
     private def collect_entries(fallback_sources : Set(Path) = Set(Path).new) : Array({Path, Path})
       entries = [] of {Path, Path}
-
       collect_recursively(template_dir, Path.new(""), entries, fallback_sources)
       entries
     end
@@ -125,11 +152,21 @@ module Crinit
     ) : Nil
       return if fallback_sources.includes?(src_child)
 
+      # Defend against malicious symlink traversal escaping template directory
+      if File.symlink?(src_child)
+        real_target = Path.new(File.realpath(src_child.to_s))
+        PathGuard.ensure_within!(template_dir, real_target, "template symlink #{src_child}")
+      end
+
       if Dir.exists?(src_child) && !File.symlink?(src_child)
         collect_recursively(src_child, rel_child, entries, fallback_sources)
       elsif File.exists?(src_child)
         rendered_rel = engine.render_path(rel_child)
-        dest_child = config.expanded_dir.join(rendered_rel)
+        dest_child = PathGuard.ensure_within!(
+          config.expanded_dir,
+          config.expanded_dir.join(rendered_rel),
+          "mirrored file #{rendered_rel}"
+        )
         entries << {src_child, dest_child}
       end
     end

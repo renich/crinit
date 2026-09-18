@@ -13,8 +13,26 @@ module Crinit
       new(config.cache_dir)
     end
 
+    SHA256_PATTERN = /\A[0-9a-fA-F]{64}\z/
+
+    # Validates whether a string matches standard 64-character hexadecimal SHA-256 formatting.
+    def self.valid_sha256?(sha256 : String) : Bool
+      (sha256 =~ SHA256_PATTERN) != nil
+    end
+
+    # Enforces SHA-256 format, raising SecurityError on invalid or traversing strings.
+    def self.validate_sha256!(sha256 : String) : Nil
+      unless valid_sha256?(sha256)
+        raise SecurityError.new(
+          "Invalid SHA-256 digest format: #{sha256.inspect}. Expected 64 hexadecimal characters."
+        )
+      end
+    end
+
     # Checks whether an asset with the given SHA-256 is present and uncorrupted in the cache.
     def has?(sha256 : String) : Bool
+      return false unless self.class.valid_sha256?(sha256)
+
       target = cache_file(sha256)
       return false unless File.exists?(target)
 
@@ -31,11 +49,13 @@ module Crinit
 
     # Retrieves the path to the cached asset, or nil if absent or corrupted.
     def get(sha256 : String) : Path?
+      return unless self.class.valid_sha256?(sha256)
       has?(sha256) ? cache_file(sha256) : nil
     end
 
     # Atomically stores content in cache indexed by SHA-256 digest.
     def store(sha256 : String, data : Bytes | String) : Path
+      self.class.validate_sha256!(sha256)
       Dir.mkdir_p(cache_dir)
       target = cache_file(sha256)
 
@@ -55,6 +75,7 @@ module Crinit
     end
 
     def cache_file(sha256 : String) : Path
+      self.class.validate_sha256!(sha256)
       cache_dir.join(sha256.downcase)
     end
 
