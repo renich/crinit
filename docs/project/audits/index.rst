@@ -45,3 +45,12 @@ Bidirectional Traceability Matrix
      - **[TECH-006]**
      - Automated Git Repository Initialization
      - Phase 1 (Milestone 1.2)
+
+Protocol Audits
+---------------
+
+.. toctree::
+   :maxdepth: 1
+
+   2026-09-18-crinit-echelon-review
+
