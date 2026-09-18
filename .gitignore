@@ -1,5 +1,41 @@
-/docs/
-/lib/
+# Crystal build and dependency artifacts
 /bin/
+/lib/
 /.shards/
 *.dwarf
+
+# Scratch working directory for AI agents / scratchpads
+/scratch/
+
+# Documentation build output
+/docs/build/
+/docs/technical/api/
+/public/
+
+# Coverage and testing artifacts
+/coverage/
+/spec/all_specs.cr
+/spec_runner
+
+# Temporary and local runtime state
+/tmp/
+/log/
+/logs/
+/.env
+/.env.local
+
+# Packaging and archives
+*.tar.gz
+*.tar.xz
+*.rpm
+*.deb
+
+# System and editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# DO NOT ignore agent journaling records (.agents/journal)
+!.agents/
+!.agents/**
