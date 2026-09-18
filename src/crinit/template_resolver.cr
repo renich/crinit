@@ -1,0 +1,115 @@
+module Crinit
+  abstract class TemplateSource
+  end
+
+  class DirectoryTemplateSource < TemplateSource
+    getter path : Path
+
+    def initialize(@path : Path)
+    end
+  end
+
+  class EmbeddedTemplateSource < TemplateSource
+    getter name : String
+
+    def initialize(@name : String)
+    end
+  end
+
+  # Resolves template locations across CLI arguments, environment variables, and OS paths.
+  module TemplateResolver
+    def self.resolve(type : String, explicit_path : String? = nil) : TemplateSource
+      # 1. Explicit CLI Path
+      if explicit_path
+        exp_path = Path.new(explicit_path).expand
+        if Dir.exists?(exp_path)
+          return DirectoryTemplateSource.new(exp_path)
+        else
+          raise TemplateNotFoundError.new("Explicit template path does not exist: #{explicit_path}")
+        end
+      end
+
+      # 2. Search Paths in Priority Order
+      candidate_paths(type).each do |candidate|
+        if Dir.exists?(candidate)
+          return DirectoryTemplateSource.new(candidate)
+        end
+      end
+
+      # 3. Fallback to Embedded Standard Views
+      if type.in?("app", "lib")
+        return EmbeddedTemplateSource.new(type)
+      end
+
+      raise TemplateNotFoundError.new(
+        "No template found for '#{type}'. Verified workspace, user XDG/AppSupport, and system paths."
+      )
+    end
+
+    private def self.candidate_paths(type : String) : Array(Path)
+      paths = [] of Path
+
+      # Priority 2: CRYSTAL_TEMPLATE_PATH environment variable
+      if env_path = ENV["CRYSTAL_TEMPLATE_PATH"]?
+        env_path.split(Process::PATH_DELIMITER, remove_empty: true).each do |base|
+          paths << Path.new(base, type).expand
+        end
+      end
+
+      # Priority 3: Local Workspace Override
+      paths << Path.new(".crystal", "templates", type).expand
+
+      # Priority 4: OS-Native User Template Directory
+      paths.concat(user_template_paths(type))
+
+      # Priority 5: OS-Native System Template Directory
+      paths.concat(system_template_paths(type))
+
+      paths.uniq
+    end
+
+    private def self.user_template_paths(type : String) : Array(Path)
+      paths = [] of Path
+
+      {% if flag?(:windows) %}
+        if local_appdata = ENV["LOCALAPPDATA"]?
+          paths << Path.new(local_appdata, "crystal", "templates", type)
+        end
+        if user_profile = ENV["USERPROFILE"]?
+          paths << Path.new(user_profile, ".crystal", "templates", type)
+        end
+      {% elsif flag?(:darwin) %}
+        if home = ENV["HOME"]?
+          paths << Path.new(home, "Library", "Application Support", "crystal", "templates", type)
+          paths << Path.new(home, ".local", "share", "crystal", "templates", type)
+        end
+      {% else %}
+        if xdg_data = ENV["XDG_DATA_HOME"]?
+          paths << Path.new(xdg_data, "crystal", "templates", type)
+        elsif home = ENV["HOME"]?
+          paths << Path.new(home, ".local", "share", "crystal", "templates", type)
+        end
+      {% end %}
+
+      paths
+    end
+
+    private def self.system_template_paths(type : String) : Array(Path)
+      paths = [] of Path
+
+      {% if flag?(:windows) %}
+        if prog_files = ENV["ProgramFiles"]?
+          paths << Path.new(prog_files, "Crystal", "templates", type)
+        end
+      {% elsif flag?(:darwin) %}
+        paths << Path.new("/opt/homebrew/share/crystal/templates", type)
+        paths << Path.new("/usr/local/share/crystal/templates", type)
+      {% else %}
+        paths << Path.new("/usr/share/crystal/templates", type)
+        paths << Path.new("/usr/local/share/crystal/templates", type)
+      {% end %}
+
+      paths
+    end
+  end
+end

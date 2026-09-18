@@ -4,10 +4,16 @@ version: 0.1.0
 authors:
   - Rénich Bon Ćirić <renich@evalinux.com>
 
+description: Next-generation pluggable project scaffolding for Crystal.
+
 targets:
   crinit:
-    main: src/crinit.cr
+    main: src/main.cr
 
 crystal: '>= 1.21.0'
 
 license: MIT
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba

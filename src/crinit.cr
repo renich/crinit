@@ -1,6 +1,12 @@
-# TODO: Write documentation for `Crinit`
-module Crinit
-  VERSION = "0.1.0"
+require "./crinit/version"
+require "./crinit/errors"
+require "./crinit/git"
+require "./crinit/config"
+require "./crinit/token_engine"
+require "./crinit/template_resolver"
+require "./crinit/embedded_views"
+require "./crinit/tree_mirrorer"
+require "./crinit/cli"
 
-  # TODO: Put your code here
+module Crinit
 end
