@@ -1,0 +1,13 @@
+name: crinit
+version: 0.1.0
+
+authors:
+  - Rénich Bon Ćirić <renich@evalinux.com>
+
+targets:
+  crinit:
+    main: src/crinit.cr
+
+crystal: '>= 1.21.0'
+
+license: MIT
