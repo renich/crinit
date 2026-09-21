@@ -14,4 +14,5 @@ This directory contains the immutable Architecture Decision Records (ADRs) docum
    2026-09-18-token-syntax-macro-collision
    2026-09-18-cross-platform-path-hierarchy
    2026-09-18-remote-assets-and-smart-fallback
+   2026-09-20-remote-template-repositories
 

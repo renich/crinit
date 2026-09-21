@@ -51,3 +51,13 @@ Functional Requirements Matrix
 
 * **[FUNC-008] Automated Git Repository Initialization**:
   Unless explicitly disabled via ``--no-git``, the engine must initialize a Git repository in the destination directory and configure default branches.
+
+* **[FUNC-009] Remote Template Repositories**:
+  The engine must support resolving templates from remote Git repositories and forge shorthands:
+
+  - Direct Git repository URLs: ``https://``, ``http://``, ``git://``, ``git@``, and ``ssh://``.
+  - Shards-compatible forge shorthands: ``github:org/repo`` and ``gitlab:org/repo``.
+  - Optional branch/tag pinning via URI fragment (``#v1.0.0``) or the ``--branch <ref>`` CLI option.
+  - Optional repository subpath scoping via the ``--subpath <path>`` CLI option, verified against directory traversal.
+  - Caching in ``$XDG_CACHE_HOME/crystal/crinit/remotes/`` via shallow cloning (``git clone --depth 1``).
+  - Offline support via ``--offline`` (serving from local cache or halting immediately if uncached) and forced cache refresh via ``--refresh``.

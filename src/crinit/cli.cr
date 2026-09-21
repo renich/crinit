@@ -31,7 +31,12 @@ module Crinit
         raise Error.new("#{config.dir.inspect} exists and is not a directory")
       end
 
-      source = TemplateResolver.resolve(config.skeleton_type, config.custom_template_path)
+      source = TemplateResolver.resolve(
+        config.skeleton_type,
+        config.custom_template_path,
+        config,
+        config.subpath
+      )
 
       case source
       when DirectoryTemplateSource
@@ -89,6 +94,7 @@ module Crinit
             app                      Creates an application skeleton (built-in)
             lib                      Creates a library skeleton (built-in)
             <custom>                 Discovers template from local, user, or system paths
+            <remote URI/shorthand>   Clones template from Git repository or forge (github:*, gitlab:*)
 
         DIR  - directory where project will be generated
         NAME - name of project to be generated (default: basename of DIR)
@@ -102,10 +108,20 @@ module Crinit
       opts.on("-s", "--skip-existing", "Skip existing files without erroring") do
         config.skip_existing = true
       end
-      opts.on("-t PATH", "--template=PATH", "Use an explicit filesystem template path") do |path|
+      opts.on("-t PATH", "--template=PATH", "Use an explicit filesystem template path or remote URI") do |path|
         config.custom_template_path = path
       end
-      opts.on("--offline", "Do not download remote assets; use cache or bundled fallbacks") do
+      opts.on("-b BRANCH", "--branch=BRANCH", "Target specific Git branch or tag for remote template") do |branch|
+        config.branch = branch
+      end
+      opts.on("--subpath=PATH", "Target subfolder within a template directory") do |path|
+        config.subpath = path
+      end
+      opts.on("-r", "--refresh", "Force re-fetching remote templates and downloading assets") do
+        config.refresh = true
+        config.refresh_assets = true
+      end
+      opts.on("--offline", "Do not download remote templates or assets; use cache or bundled fallbacks") do
         config.offline = true
       end
       opts.on("--refresh-assets", "Bypass local cache and re-download remote assets") do
@@ -167,6 +183,8 @@ module Crinit
     end
 
     def self.validate_skeleton_type(type : String) : Nil
+      return if RemoteTemplateResolver.valid_uri?(type)
+
       unless type =~ /\A[a-zA-Z0-9_-]+\z/
         raise InvalidNameError.new(
           "Invalid template type #{type.inspect}. Must contain only alphanumeric characters, dashes, or underscores."

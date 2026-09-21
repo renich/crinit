@@ -30,6 +30,14 @@ Milestones & Deliverables
   - [ ] Verify zero Ameba and Flaw warnings.
   - [ ] Validate all documentation with ``crstlint``.
 
+* **Milestone 1.4: Remote Template Repositories** (Fulfills `[FUNC-009]`):
+
+  - [ ] Implement ``Crinit::RemoteTemplateResolver`` with Git URL and Shards forge support.
+  - [ ] Implement local cache manager under ``$XDG_CACHE_HOME/crystal/crinit/remotes/``.
+  - [ ] Implement branch/tag pinning via URI fragments and ``--branch <ref>``.
+  - [ ] Implement safe subpath scoping via ``--subpath <path>``.
+  - [ ] Support ``--offline`` and unified ``--refresh`` cache updating.
+
 Dependency Graph & Critical Path
 --------------------------------
 

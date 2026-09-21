@@ -113,16 +113,20 @@ module Crinit
       self.class.digest_file(path)
     end
 
-    private def default_cache_dir : Path
+    def self.default_base_cache_dir : Path
       {% if flag?(:windows) %}
         base = ENV["LOCALAPPDATA"]?.presence || ENV["TEMP"]?.presence || "."
-        Path.new(base).join("crystal", "crinit", "assets")
+        Path.new(base).join("crystal", "crinit")
       {% elsif flag?(:darwin) %}
-        Path.home.join("Library", "Caches", "crystal", "crinit", "assets")
+        Path.home.join("Library", "Caches", "crystal", "crinit")
       {% else %}
         base = ENV["XDG_CACHE_HOME"]?.presence || Path.home.join(".cache").to_s
-        Path.new(base).join("crystal", "crinit", "assets")
+        Path.new(base).join("crystal", "crinit")
       {% end %}
+    end
+
+    private def default_cache_dir : Path
+      self.class.default_base_cache_dir.join("assets")
     end
   end
 end

@@ -13,6 +13,9 @@ describe Crinit::CLI do
   it "validates template skeleton type" do
     Crinit::CLI.validate_skeleton_type("app").should be_nil
     Crinit::CLI.validate_skeleton_type("kemal-web").should be_nil
+    Crinit::CLI.validate_skeleton_type("https://github.com/kemalcr/kemal-starter.git").should be_nil
+    Crinit::CLI.validate_skeleton_type("github:kemalcr/kemal-starter").should be_nil
+    Crinit::CLI.validate_skeleton_type("gitlab:org/project").should be_nil
     expect_raises(Crinit::InvalidNameError, /Invalid template type/) do
       Crinit::CLI.validate_skeleton_type("../bad/type")
     end
@@ -45,6 +48,22 @@ describe Crinit::CLI do
       expect_raises(Crinit::Error, /Cannot use --force and --skip-existing together/) do
         Crinit::CLI.parse_args(["app", dir.to_s, "--force", "--skip-existing"])
       end
+    end
+  end
+
+  it "parses --branch, --subpath, and --refresh options [FUNC-009]" do
+    with_temp_dir("crinit_flags_test") do |dir|
+      target_dir = dir.join("starter_app")
+      config = Crinit::CLI.parse_args([
+        "github:kemalcr/kemal-starter",
+        target_dir.to_s,
+        "--branch", "v1.2.0",
+        "--subpath", "templates/web",
+        "--refresh",
+      ])
+      config.branch.should eq("v1.2.0")
+      config.subpath.should eq("templates/web")
+      config.refresh?.should be_true
     end
   end
 

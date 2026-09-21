@@ -13,3 +13,5 @@ This section outlines the strategic motivation, business goals, and persona dyna
    specs/problem-statement
    specs/roi-goals
    specs/user-personas
+   specs/user-stories
+   problematics

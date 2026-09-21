@@ -13,6 +13,9 @@ module Crinit
     property? no_git : Bool
     property? offline : Bool
     property? refresh_assets : Bool
+    property? refresh : Bool
+    property branch : String?
+    property subpath : String?
     property cache_dir : Path?
 
     def initialize(
@@ -29,6 +32,9 @@ module Crinit
       @no_git : Bool = false,
       @offline : Bool = false,
       @refresh_assets : Bool = false,
+      @refresh : Bool = false,
+      @branch : String? = nil,
+      @subpath : String? = nil,
       @cache_dir : Path? = nil,
     )
     end

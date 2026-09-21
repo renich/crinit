@@ -50,3 +50,26 @@ Overwriting or Skipping Files
   .. code-block:: bash
 
      crinit service telemetry_agent --skip-existing
+
+Using Remote Git Templates
+--------------------------
+Scaffold directly from external Git repositories or code forges:
+
+.. code-block:: bash
+
+   # Scaffolding directly from an HTTPS Git repository
+   crinit https://github.com/kemalcr/kemal-starter.git my_web_app
+
+   # Using Shards-compatible forge shorthands
+   crinit github:kemalcr/kemal-starter my_web_app
+
+   # Pinning a specific branch or release tag
+   crinit github:kemalcr/kemal-starter#v1.2.0 my_web_app
+   crinit github:kemalcr/kemal-starter my_web_app --branch v1.2.0
+
+   # Scaffolding from a subfolder within a monorepo
+   crinit github:kemalcr/templates my_web_app --subpath starters/web
+
+   # Re-fetching latest updates or running offline
+   crinit github:kemalcr/kemal-starter my_web_app --refresh
+   crinit github:kemalcr/kemal-starter my_web_app --offline

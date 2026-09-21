@@ -51,4 +51,21 @@ describe Crinit::TemplateResolver do
       Crinit::TemplateResolver.resolve("non_existent_skeleton_type")
     end
   end
+
+  it "routes remote URIs to remote template resolution [FUNC-009]" do
+    with_temp_dir("crinit_remote_resolver_route") do |cache_root|
+      uri = "github:kemalcr/kemal-starter"
+      parsed = Crinit::RemoteTemplateResolver.parse(uri)
+      cached_path = Crinit::RemoteTemplateResolver.cache_dir_for(parsed, cache_root)
+      Dir.mkdir_p(cached_path)
+      File.write(cached_path.join("shard.yml"), "name: routed_template\n")
+
+      config = Crinit::Config.new(offline: true)
+      config.cache_dir = cache_root
+
+      source = Crinit::TemplateResolver.resolve(uri, config: config)
+      source.should be_a(Crinit::DirectoryTemplateSource)
+      source.as(Crinit::DirectoryTemplateSource).path.should eq(cached_path)
+    end
+  end
 end

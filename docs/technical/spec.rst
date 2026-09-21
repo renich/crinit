@@ -13,4 +13,5 @@ This section outlines the internal architecture, cross-platform resolution logic
    specs/architecture-overview
    specs/platform-matrix
    specs/token-engine-spec
+   specs/remote-templates-spec
    specs/coding-standards

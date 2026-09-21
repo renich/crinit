@@ -6,6 +6,7 @@
 
 # Scratch working directory for AI agents / scratchpads
 /scratch/
+/.agents/
 
 # Documentation build output
 /docs/build/

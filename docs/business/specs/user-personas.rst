@@ -27,7 +27,15 @@ Marcus the Web Framework Maintainer
 * **Role**: Lead developer of a hypermedia web framework (e.g., Kemal, Athena, Datastar).
 * **Context**: Wants developers to experience a frictionless "hello world" that demonstrates modern web patterns.
 * **Pain Point**: Cannot integrate his framework into ``crystal init``. Directs users to clone starter repos, which quickly bitrot.
-* **Needs**: Official, pluggable template directories where users can run ``crystal init my-framework my_app``.
+* **Needs**: Official, pluggable template directories where users can run ``crystal init my-framework my_app`` or point directly to framework repository starters.
+
+Xen the Community Developer & Starter Author
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **Role**: Crystal community developer sharing specialized starter setups on GitHub/GitLab.
+* **Context**: Maintains community templates for niche architectures, microservices, and game dev.
+* **Pain Point**: Users find it clumsy to copy template repositories into local XDG directories before scaffolding.
+* **Needs**: Ability to share a single command: ``crinit https://github.com/kemalcr/kemal my_app`` or ``crinit github:user/starter my_app``.
 
 Elena the Crystal Compiler Core Maintainer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

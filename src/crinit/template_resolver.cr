@@ -16,17 +16,45 @@ module Crinit
     end
   end
 
-  # Resolves template locations across CLI arguments, environment variables, and OS paths.
+  # Resolves template locations across CLI arguments, environment variables, OS paths, and remote repositories.
   module TemplateResolver
-    def self.resolve(type : String, explicit_path : String? = nil) : TemplateSource
-      # 1. Explicit CLI Path
+    def self.resolve(
+      type : String,
+      explicit_path : String? = nil,
+      config : Config = Config.new,
+      subpath : String? = nil,
+    ) : TemplateSource
+      effective_subpath = subpath || config.subpath
+
+      # 1. Explicit CLI Path or Remote URI
       if explicit_path
+        if RemoteTemplateResolver.valid_uri?(explicit_path)
+          return RemoteTemplateResolver.resolve(explicit_path, config, effective_subpath)
+        end
+
         exp_path = Path.new(explicit_path).expand
+        if effective_subpath && !effective_subpath.empty?
+          candidate = exp_path.join(effective_subpath)
+          PathGuard.ensure_within!(exp_path, candidate, "template subpath #{effective_subpath.inspect}")
+          if Dir.exists?(candidate)
+            return DirectoryTemplateSource.new(candidate)
+          else
+            raise TemplateNotFoundError.new(
+              "Subpath '#{effective_subpath}' does not exist in template directory #{exp_path}."
+            )
+          end
+        end
+
         if Dir.exists?(exp_path)
           return DirectoryTemplateSource.new(exp_path)
         else
           raise TemplateNotFoundError.new("Explicit template path does not exist: #{explicit_path}")
         end
+      end
+
+      # 2. Remote URI Type
+      if RemoteTemplateResolver.valid_uri?(type)
+        return RemoteTemplateResolver.resolve(type, config, effective_subpath)
       end
 
       # 2. Search Paths in Priority Order
