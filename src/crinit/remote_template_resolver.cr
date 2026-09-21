@@ -8,7 +8,7 @@ module Crinit
   # Resolves remote Git repositories and forge templates with local caching.
   module RemoteTemplateResolver
     def self.valid_uri?(string : String) : Bool
-      return false if string.blank?
+      return false if string.blank? || string.starts_with?('-')
       return true if string.starts_with?("github:") || string.starts_with?("gitlab:")
       return true if string.starts_with?("https://") || string.starts_with?("http://")
       return true if string.starts_with?("git://") || string.starts_with?("ssh://") || string.starts_with?("git@")
@@ -111,9 +111,12 @@ module Crinit
 
       args = ["clone", "--depth", "1"]
       if ref = parsed.ref
+        if ref.starts_with?('-')
+          raise SecurityError.new("Invalid git ref #{ref.inspect}: reference cannot start with a hyphen.")
+        end
         args << "--branch" << ref
       end
-      args << parsed.clone_url << repo_dir.to_s
+      args << "--" << parsed.clone_url << repo_dir.to_s
 
       success = Git.git_command(args)
       unless success

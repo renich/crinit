@@ -7,17 +7,23 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_,
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
-[Unreleased]
-============
+[0.1.1] - 2026-09-21
+====================
+
+.. rubric:: Security
+
+- Hardened ``Crinit::AssetFetcher`` against Server-Side Request Forgery (SSRF) and DNS rebinding by resolving hostnames via ``Socket::Addrinfo`` and validating all resolved addresses against loopback, private RFC 1918, link-local, and cloud metadata IP ranges.
+- Hardened ``Crinit::PathGuard`` against intermediate directory symlink traversal by recursively inspecting existing ancestor path segments and verifying canonical filesystem realpaths.
+- Hardened ``Crinit::RemoteTemplateResolver`` against Git command option injection by rejecting branch/tag refs starting with hyphens and adding the ``--`` positional argument delimiter before remote clone URLs.
 
 .. rubric:: Added
 
 - Remote Git repository and forge template resolution (``Crinit::RemoteTemplateResolver``) supporting direct Git URLs (``https://``, ``http://``, ``git://``, ``git@``, ``ssh://``, and ``file://``).
 - Native Shards forge shorthand expansion for ``github:owner/repo`` and ``gitlab:owner/repo`` (matching official ``shard.yml`` dependency semantics).
-- Branch, tag, and commit ref pinning via RFC 3986 URI fragments (``#ref``) and the ``-b`` / ``--branch <ref>`` CLI option.
+- Branch, tag, and commit ref pinning via RFC 3986 URI fragments (``#ref``) and the ``-b``/``--branch <ref>`` CLI option.
 - Repository subpath scoping via the ``--subpath <path>`` CLI option with ``PathGuard`` path traversal protection.
 - Deterministic local cache pipeline under ``$XDG_CACHE_HOME/crystal/crinit/remotes/`` with shallow cloning (``--depth 1``).
-- Unified cache refresh flag (``-r`` / ``--refresh``) to force re-fetching remote templates and remote assets.
+- Unified cache refresh flag (``-r``/``--refresh``) to force re-fetching remote templates and remote assets.
 - Full offline resilience under ``--offline`` serving cached repositories with sub-millisecond execution and fatal preflight checks for uncached templates.
 - Architecture Decision Record :doc:`/adrs/2026-09-20-remote-template-repositories` (ADR-005).
 

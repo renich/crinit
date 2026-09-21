@@ -1,4 +1,5 @@
 require "http/client"
+require "socket"
 require "uri"
 require "colorize"
 
@@ -233,6 +234,20 @@ module Crinit
 
       if blocked_ip?(host_lower)
         raise SecurityError.new("Access to private/local network address #{host.inspect} is prohibited.")
+      end
+
+      begin
+        resolved_addrs = Socket::Addrinfo.resolve(host_lower, nil, type: Socket::Type::STREAM)
+        resolved_addrs.each do |addr|
+          ip_str = addr.ip_address.address
+          if BLOCKED_HOSTNAMES.includes?(ip_str) || blocked_ip?(ip_str)
+            raise SecurityError.new("Access to private/local network address #{host.inspect} (#{ip_str}) is prohibited.")
+          end
+        end
+      rescue ex : SecurityError
+        raise ex
+      rescue Socket::Addrinfo::Error
+        # DNS resolution failure will be handled by the connection attempt
       end
     end
 

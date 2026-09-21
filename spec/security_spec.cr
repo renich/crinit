@@ -42,6 +42,20 @@ describe Crinit::PathGuard do
       Crinit::PathGuard.ensure_within!(base, target)
     end
   end
+
+  it "raises SecurityError when an intermediate directory is a symlink pointing outside" do
+    with_temp_dir("crinit_pg_base") do |base_dir|
+      with_temp_dir("crinit_pg_outside") do |outside_dir|
+        symlink_dir = base_dir.join("linked_dir")
+        File.symlink(outside_dir.to_s, symlink_dir.to_s)
+
+        target = symlink_dir.join("nested", "file.cr")
+        expect_raises(Crinit::SecurityError, /Symlink traversal detected/) do
+          Crinit::PathGuard.ensure_within!(base_dir, target)
+        end
+      end
+    end
+  end
 end
 
 describe Crinit::CacheStore do
@@ -199,6 +213,16 @@ describe "TreeMirrorer & AssetFetcher Security Hardening" do
 
       expect_raises(Crinit::SecurityError, /missing required sha256 checksum/) do
         fetcher.resolve_asset(unsigned_executable)
+      end
+    end
+  end
+
+  it "raises SecurityError when git ref starts with a hyphen" do
+    with_temp_dir("crinit_ref_injection") do |cache_dir|
+      config = Crinit::Config.new(branch: "--upload-pack=touch /tmp/evil")
+      config.cache_dir = cache_dir
+      expect_raises(Crinit::SecurityError, /Invalid git ref/) do
+        Crinit::RemoteTemplateResolver.resolve("github:user/repo", config)
       end
     end
   end
