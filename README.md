@@ -1,25 +1,17 @@
-<p align="center">
-  <img src="assets/banner.svg" alt="crinit Banner" width="100%" />
-</p>
+![crinit Banner](assets/banner.svg)
 
-<p align="center">
-  <strong>Next-generation pluggable project scaffolding engine for Crystal. Engineered for arbitrary tree mirroring, macro-safe token replacement, and zero-dependency upstream compiler integration.</strong>
-</p>
+**Next-generation pluggable project scaffolding engine for Crystal. Engineered for arbitrary tree mirroring, macro-safe token replacement, and zero-dependency upstream compiler integration.**
 
-<p align="center">
-  <a href="https://gitlab.com/renich/crinit/-/releases"><img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version 0.1.0" /></a>
-  <a href="https://crystal-lang.org/"><img src="https://img.shields.io/badge/crystal-%3E%3D%201.21.0-black.svg?style=flat-square&logo=crystal&logoColor=white" alt="Crystal >= 1.21.0" /></a>
-  <a href="https://gitlab.com/renich/crinit/-/pipelines"><img src="https://img.shields.io/badge/pipeline-passing-brightgreen.svg?style=flat-square&logo=gitlab" alt="GitLab CI Passing" /></a>
-  <a href="https://gitlab.com/renich/crinit"><img src="https://img.shields.io/badge/specs-58%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
-  <a href="https://github.com/crystal-ameba/ameba"><img src="https://img.shields.io/badge/ameba-0%20violations-brightgreen.svg?style=flat-square" alt="Ameba Clean" /></a>
-  <a href="https://github.com/kdairatchi/flaw"><img src="https://img.shields.io/badge/flaw-0%20findings-brightgreen.svg?style=flat-square" alt="Flaw Clean" /></a>
-</p>
+[![Version 0.1.0](https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square)](https://gitlab.com/renich/crinit/-/releases)
+[![Crystal >= 1.21.0](https://img.shields.io/badge/crystal-%3E%3D%201.21.0-black.svg?style=flat-square&logo=crystal&logoColor=white)](https://crystal-lang.org/)
+[![GitLab CI Passing](https://img.shields.io/badge/pipeline-passing-brightgreen.svg?style=flat-square&logo=gitlab)](https://gitlab.com/renich/crinit/-/pipelines)
+[![Specs Passing](https://img.shields.io/badge/specs-58%20passing-success.svg?style=flat-square&logo=crystal)](https://gitlab.com/renich/crinit)
+[![Ameba Clean](https://img.shields.io/badge/ameba-0%20violations-brightgreen.svg?style=flat-square)](https://github.com/crystal-ameba/ameba)
+[![Flaw Clean](https://img.shields.io/badge/flaw-0%20findings-brightgreen.svg?style=flat-square)](https://github.com/kdairatchi/flaw)
 
-<p align="center">
-  <a href="https://renich.gitlab.io/crinit/"><img src="https://img.shields.io/badge/docs-Sphinx%20Portal-orange.svg?style=flat-square&logo=sphinx&logoColor=white" alt="Sphinx Documentation" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT" /></a>
-  <a href="https://liberapay.com/Renich/donate"><img src="https://img.shields.io/badge/liberapay-donate-yellow.svg?style=flat-square&logo=liberapay&logoColor=white" alt="Donate using Liberapay" /></a>
-</p>
+[![Sphinx Documentation](https://img.shields.io/badge/docs-Sphinx%20Portal-orange.svg?style=flat-square&logo=sphinx&logoColor=white)](https://renich.gitlab.io/crinit/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Donate using Liberapay](https://img.shields.io/badge/liberapay-donate-yellow.svg?style=flat-square&logo=liberapay&logoColor=white)](https://liberapay.com/Renich/donate)
 
 > **Project Metadata**:
 > - **Description**: Next-generation pluggable project scaffolding engine for Crystal. Engineered for arbitrary tree mirroring, macro-safe token replacement, and zero-dependency upstream compiler integration.
@@ -116,9 +108,9 @@ Priority 6: Built-in Defaults                               (Embedded app/lib fa
 
 | Platform | User Template Directory (`Priority 4`) | System Template Directory (`Priority 5`) |
 | :--- | :--- | :--- |
-| **Linux/BSD** | `$XDG_DATA_HOME/crystal/templates`<br>*(Fallback: `~/.local/share/crystal/templates`)* | `/usr/share/crystal/templates`<br>*(or `$ORIGIN/../share/crystal/templates`)* |
-| **macOS** | `~/Library/Application Support/crystal/templates`<br>*(Fallback: `~/.local/share/crystal/templates`)* | `/opt/homebrew/share/crystal/templates`<br>*(or `/usr/local/share/crystal/templates`)* |
-| **Windows** | `%LOCALAPPDATA%\crystal\templates`<br>*(Fallback: `%USERPROFILE%\.crystal\templates`)* | `%ProgramFiles%\Crystal\templates`<br>*(or `$ORIGIN\..\share\crystal\templates`)* |
+| **Linux/BSD** | `$XDG_DATA_HOME/crystal/templates` (Fallback: `~/.local/share/crystal/templates`) | `/usr/share/crystal/templates` (or `$ORIGIN/../share/crystal/templates`) |
+| **macOS** | `~/Library/Application Support/crystal/templates` (Fallback: `~/.local/share/crystal/templates`) | `/opt/homebrew/share/crystal/templates` (or `/usr/local/share/crystal/templates`) |
+| **Windows** | `%LOCALAPPDATA%\crystal\templates` (Fallback: `%USERPROFILE%\.crystal\templates`) | `%ProgramFiles%\Crystal\templates` (or `$ORIGIN\..\share\crystal\templates`) |
 
 ---
 
@@ -208,7 +200,7 @@ All contributions must adhere to the [Universal Code of Honor](CODE_OF_HONOR.rst
 - **Software**: MIT License ([LICENSE](LICENSE)).
 - **Documentation**: GNU Free Documentation License v1.3 or later ([LICENSE-DOCS](LICENSE-DOCS)).
 
-Copyright &copy; 2026 Rénich Bon Ćirić &lt;renich@evalinux.com&gt;.
+Copyright © 2026 Rénich Bon Ćirić <renich@evalinux.com>.
 
 ---
 
@@ -216,8 +208,4 @@ Copyright &copy; 2026 Rénich Bon Ćirić &lt;renich@evalinux.com&gt;.
 
 If you find this project useful and wish to support its ongoing development, please consider donating:
 
-<p align="center">
-  <a href="https://liberapay.com/Renich/donate">
-    <img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" />
-  </a>
-</p>
+[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Renich/donate)
